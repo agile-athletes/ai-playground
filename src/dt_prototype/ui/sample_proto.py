@@ -14,4 +14,4 @@ demo = gr.Interface(fn=store_message,
                     inputs=["textbox", gr.State(value=[])],
                     outputs=["json", gr.State()])
 
-demo.launch()
+# demo.launch()
