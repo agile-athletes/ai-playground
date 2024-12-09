@@ -13,5 +13,3 @@ def store_message(message: str, history: list[str]):
 demo = gr.Interface(fn=store_message,
                     inputs=["textbox", gr.State(value=[])],
                     outputs=["json", gr.State()])
-
-# demo.launch()

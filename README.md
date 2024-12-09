@@ -10,5 +10,5 @@ A shared ai-playground starting with the making of a RAG-Design-Thinking prototy
 
 - Create virtual env `uv venv`
 - Activate virtual env `source .venv/bin/activate`
-- Install dependencies `uv pip install -r requirements.txt`
+- Install dependencies `uv sync`
 
