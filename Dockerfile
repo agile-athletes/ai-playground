@@ -1,6 +1,6 @@
 FROM ghcr.io/astral-sh/uv AS uv
 
-FROM docker.io/python:3.13-bookworm AS python
+FROM docker.io/python:3.13 AS python
 WORKDIR /app
 COPY uv.lock pyproject.toml .
 RUN --mount=type=cache,target=/cache \
