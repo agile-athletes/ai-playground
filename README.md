@@ -1,5 +1,5 @@
 # ai-playground
-A shared ai-playground starting with the making of a RAG-Design-Thinking prototype
+A shared ai-playground starting with the making of a RAG-SWOT-Analysis - and RAG-Design-Thinking prototype
 
 ## Requirements
 
