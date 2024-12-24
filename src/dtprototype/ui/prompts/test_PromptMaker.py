@@ -3,6 +3,7 @@
 # and is distributed under the terms of the MIT licence.
 
 from unittest import TestCase
+
 from PromptMaker import PromptMaker
 from SuggestionPromptMaker import SuggestionPromptMaker
 
@@ -10,6 +11,7 @@ from SuggestionPromptMaker import SuggestionPromptMaker
 class TestPromptMaker(PromptMaker):
     def make_prompt(self, arg: str) -> str:
         return f"Test prompt: {arg}"
+
 
 class TestTestPromptMaker(TestCase):
 
@@ -23,4 +25,3 @@ class TestTestPromptMaker(TestCase):
 
     def test_make_prompt(self):
         print(SuggestionPromptMaker().make_prompt("hello world"))
-

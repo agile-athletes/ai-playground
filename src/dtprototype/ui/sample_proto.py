@@ -9,9 +9,12 @@ from .prompts.PromptMaker import load_markdown_file
 with gr.Blocks() as demo:
     title = gr.HTML("<H1>Long Range Planning with SOFT</H1>")
     with gr.Row():
-        issue = gr.TextArea(label="Issue Editor")
-        suggested = gr.TextArea(label="Proposed by AI through corrections based on the validation report")
-    validator = gr.Markdown(label="Validation report on your Issue Editor text")
+        issue = gr.TextArea(label="Issue Editor", value="New artificial intelligence technology is challenging our core business of on-demand translation.")
+        with gr.Column():
+            gr.HTML("<label for='suggestions-md-id'>Proposed by AI through corrections based on the validation report</label>")
+            suggested = gr.Markdown(elem_id="suggestions-md-id", label=None)
+    gr.HTML("<label for='validation-md-id'>Inspiration by AI on your Issue Editor text</label>")
+    validator = gr.Markdown(elem_id="validation-md-id", label=None)
     with gr.Row():
         validate_button = gr.Button("Validate")
         issue_button = gr.Button("Issue yours")
@@ -20,10 +23,20 @@ with gr.Blocks() as demo:
 
     @validate_button.click(inputs=issue, outputs=validator)
     def validate_issue(issue_text: str):
-        return load_markdown_file("tmp.md")
-        # return "<H2>Jelle</H2>\n\n### Markdown"
+        return load_markdown_file("tmp_inspiration.md")
 
 
     @validate_button.click(inputs=issue, outputs=suggested)
     def issue_correction(issue_text: str):
-        return issue_text + "Correction"
+        return load_markdown_file("tmp_validation.md")
+
+    demo.css = """
+    #suggestions-md-id, #validation-md-id {
+        border: 1px solid #ccc;
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 10px;
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+    }
+    """
