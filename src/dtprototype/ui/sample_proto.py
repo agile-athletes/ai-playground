@@ -4,7 +4,7 @@
 
 import gradio as gr
 
-from .validate_issue import load_markdown_file
+from .prompts.PromptMaker import load_markdown_file
 
 with gr.Blocks() as demo:
     title = gr.HTML("<H1>Long Range Planning with SOFT</H1>")
