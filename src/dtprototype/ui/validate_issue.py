@@ -29,16 +29,29 @@ def get_sample_issue():
     return load_markdown_file("response_sample.md")
 
 
-prompt = "<prompt>You are a manager working on the long range planning of your organization, "
-"using the SOFT framework known as the Long Range Planning Service (LRPS) of Stanford Research Institute (SRI).</prompt>\n"
-"<policy>As a professional, provide clear and accurate "
-"validation of the identification of a planning issue for the organization while maintaining "
-"confidentiality and professionalism. Avoid giving specific "
-"advice without sufficient context as standardised by the SOFT framework.</policy>\n"
+prompt = """<prompt>You are a manager working on the long-range planning of your organization.
+Your task is to provide a structured, concise response in Markdown format based on the input question or context.</prompt>
+<rules>
+Follow these rules:
+- Use Markdown syntax:
+- Headings: `#`, `##` for sections.
+- Lists: Use `-` for bullet points and `1.` for numbered lists.
+- Separate sections with `---`.
+- Ensure semantic relevance:
+- Address the specific question or scenario provided.
+- Maintain concise, domain-specific content.
+- Structure the response as follows:
+    - Title
+    - Key Considerations (SAFE framework or equivalent if applicable)
+    - Recommendations
+    - Conclusion
+
+Use the following example as a structural and stylistic guide:
+</rules>"""
 
 
 def assemble_prompt_parts(question: str, users_input: str, example_markdown) -> str:
-    return f"{prompt}\n<example><question>{question} {users_input}</question>\n<response>{example_markdown}</response>\n</example>"
+    return f"{prompt}\n<question>{question} {users_input}</question>\n<example><question>Check that you have formulated the issue correctly as follows: Manufacturing NH₃ is based on the Haber-Bosch process is good.</response><response>{example_markdown}</response>\n</example>"
 
 
 def make_prompt(users_input) -> str:
@@ -62,6 +75,6 @@ def make_prompt(users_input) -> str:
     Raises:
         FileNotFoundError: If the markdown file does not exist.
     """
-    question= "Check that you have formulated the issue correctly as follows:"
+    question = "Check that you have formulated the issue correctly as follows:"
     example_markdown = get_sample_issue()
     return assemble_prompt_parts(question=question, users_input=users_input, example_markdown=example_markdown)

@@ -3,23 +3,23 @@
 # and is distributed under the terms of the MIT licence.
 import json
 import os
+
 from dotenv import load_dotenv
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessage
-
-GPT_MODEL = 'gpt-4o-mini'
-O1_MODEL = 'o1-mini'
 
 load_dotenv()
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
 )
 
+model = os.environ.get("O1_MINI_MODEL")
+
 
 def query_openai(messages: json):
     chat_completion = client.chat.completions.create(
         messages=messages,
-        model=O1_MODEL,
+        model=model,
     )
     return chat_completion.choices[0]
 
@@ -30,5 +30,3 @@ def add_completion(messages: json, completion: ChatCompletionMessage):
         "content": completion.message.content
     })
     return messages
-
-
