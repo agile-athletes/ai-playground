@@ -15,3 +15,6 @@ Based on [The origins of SWOT analysis](https://www.sciencedirect.com/science/ar
 - Activate virtual env `source .venv/bin/activate`
 - Install dependencies `uv sync`
 
+## Adding dependencies
+
+- `uv add gradio`
