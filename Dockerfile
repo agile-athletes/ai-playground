@@ -15,4 +15,4 @@ RUN  \
 	/uv sync --no-dev --locked
 ENV GRADIO_SERVER_NAME="0.0.0.0"
 EXPOSE 7860
-CMD ["/app/.venv/bin/python", "main.py"]
+CMD ["/app/.venv/bin/python", "src/dtprototype/main.py"]
