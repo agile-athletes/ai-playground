@@ -23,7 +23,7 @@ with gr.Blocks() as demo:
 
     @validate_button.click(inputs=issue, outputs=validator)
     def validate_issue(issue_text: str):
-        return load_markdown_file("tmp_inspiration.md")
+        return load_markdown_file("sample_validation.md")
 
 
     @validate_button.click(inputs=issue, outputs=suggested)
