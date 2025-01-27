@@ -3,7 +3,6 @@
 # and is distributed under the terms of the MIT licence.
 import os
 from abc import ABC, abstractmethod
-# from typing import overload
 
 
 class PromptMaker(ABC):

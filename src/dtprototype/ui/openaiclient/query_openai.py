@@ -13,7 +13,7 @@ client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
 )
 
-model = os.environ.get("O1_MINI_MODEL")
+model = "gpt-4o-mini"
 
 
 def query_openai(messages: json):
@@ -30,3 +30,9 @@ def add_completion(messages: json, completion: ChatCompletionMessage):
         "content": completion.message.content
     })
     return messages
+
+
+def strip_json_from_llm(json_data: str) -> str:
+    # Remove ```json and ``` markers
+    clean_json = json_data.strip("```json").strip("```").strip()
+    return clean_json
