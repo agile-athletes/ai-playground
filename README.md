@@ -62,7 +62,7 @@ In terms of data collection, this can be a false start. Or at least the subseque
 ## Getting Started
 
 - Create virtual env `uv venv`
-- Activate virtual env `source .venv/bin/activate`
+- Activate virtual env `source .venv/bin/activate` (for Windows type `.venv\Scripts\activate`)
 - Install dependencies `uv sync`
 
 ## Adding dependencies
