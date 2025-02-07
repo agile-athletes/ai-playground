@@ -1,0 +1,85 @@
+{
+  "name": "source-sink",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nconsole.log($input.first().json.body);\nconst messages = $input.first().json.body;\nmessages.push({ \"role\": \"system\", \"content\": \"testloop success\" })\nconsole.log(messages)\nreturn messages;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        460
+      ],
+      "id": "d11051a8-1b73-43bc-8a15-d29ab1edaa73",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "2e3285ba-a6d9-4e0c-a6ab-8fa57bb4610d",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        900,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "5b58f7ff-2c87-4850-8cce-583ee8009f04",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        460,
+        460
+      ],
+      "id": "2fba6efb-7280-4e70-a7a9-b843ba844d1f",
+      "name": "Webhook",
+      "webhookId": "5b58f7ff-2c87-4850-8cce-583ee8009f04"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "16eda7a1-4e22-4d89-821c-281d36484c0d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "68f9e66783549a11e344292a1ef8ccb1a9d2307f134c3a15405499ae2f6cb69a"
+  },
+  "id": "OaRhb2rgBdSCEV2K",
+  "tags": []
+}

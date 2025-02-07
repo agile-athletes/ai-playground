@@ -15,6 +15,7 @@ def source_to_n8n(payload, webhook_url):
         response = requests.post(webhook_url, data=json.dumps(payload), headers=headers)
         response.raise_for_status()  # Raises an HTTPError for bad responses
         return response.json()
+
     except requests.exceptions.RequestException as e:
         print(f"Error sending data to n8n: {e}")
         return None
@@ -33,10 +34,10 @@ def sink_from_n8n(data):
 if __name__ == "__main__":
     # Example webhook URL (replace with your actual n8n webhook URL)
     webhook_url = "http://localhost:5678/webhook-test/5b58f7ff-2c87-4850-8cce-583ee8009f04"
-    # webhook_url = "http://localhost:5678/webhook/5b58f7ff-2c87-4850-8cce-583ee8009f04"
+        # webhook_url = "http://localhost:5678/webhook/5b58f7ff-2c87-4850-8cce-583ee8009f04"
 
     sample_data = [{"role":"user","content":"Loop these messages back."}]
     # Source example
     result = source_to_n8n(sample_data, webhook_url)
     if result:
-        print(f"Data sent successfully to n8n: {result}")
+        print(f"Response from n8n: {result} {type(result)}")
