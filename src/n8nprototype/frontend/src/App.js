@@ -1,3 +1,4 @@
+// src/App.js
 import React, { useState } from 'react';
 import ChatWindow from './components/ChatWindow';
 import InputArea from './components/InputArea';
@@ -6,21 +7,10 @@ import './App.css';
 function App() {
     const [messages, setMessages] = useState([]);
 
-    /**
-     * sendMessage:
-     *  - Adds the user's message to the conversation.
-     *  - Posts the message to the backend webhook.
-     *  - Updates the conversation with the returned messages.
-     */
     const sendMessage = async (userContent, file) => {
-        // Create a user message object.
         const userMessage = { role: 'user', content: userContent };
-
-        // Optimistically add the user message.
-        setMessages(prev => [...prev, userMessage]);
-
-        // Prepare payload for the backend (an array of messages).
-        const payload = messages;
+        const updatedMessages = [...messages, userMessage];
+        setMessages(updatedMessages);
 
         try {
             const response = await fetch(
@@ -28,7 +18,7 @@ function App() {
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(messages),
+                    body: JSON.stringify(updatedMessages),
                 }
             );
 
@@ -36,23 +26,26 @@ function App() {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            // The backend returns the conversation with the system response.
             const data = await response.json();
             setMessages(data);
         } catch (error) {
             console.error('Error sending message:', error);
-            // Optionally, add an error message to the chat.
-            setMessages(prev => [
+            setMessages((prev) => [
                 ...prev,
                 { role: 'system', content: 'Error: Could not send message.' },
             ]);
         }
     };
 
+    // New function to clear the chat
+    const clearChat = () => {
+        setMessages([]);
+    };
+
     return (
         <div className="app-container">
             <ChatWindow messages={messages} />
-            <InputArea onSend={sendMessage} />
+            <InputArea onSend={sendMessage} onNewChat={clearChat} />
         </div>
     );
 }

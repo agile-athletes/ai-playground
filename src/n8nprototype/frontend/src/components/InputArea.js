@@ -1,11 +1,12 @@
+// src/components/InputArea.js
 import React, { useState } from 'react';
+import {FaArrowUp, FaPencil} from 'react-icons/fa';
 import './InputArea.css';
 
-const InputArea = ({ onSend }) => {
+const InputArea = ({ onSend, onNewChat }) => {
     const [text, setText] = useState('');
     const [selectedFile, setSelectedFile] = useState(null);
 
-    // Handle sending the message.
     const handleSend = () => {
         if (text.trim() === '') return; // do not send empty messages
         onSend(text, selectedFile);
@@ -13,7 +14,6 @@ const InputArea = ({ onSend }) => {
         setSelectedFile(null);
     };
 
-    // Handle file selection and only accept PDF files.
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file && file.type === 'application/pdf') {
@@ -27,6 +27,13 @@ const InputArea = ({ onSend }) => {
     const handleKeyDown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
+        }
+    };
+
+    // Handle "New Chat" button click.
+    const handleNewChat = () => {
+        if (onNewChat) {
+            onNewChat();
         }
     };
 
@@ -45,8 +52,12 @@ const InputArea = ({ onSend }) => {
                 onKeyDown={handleKeyDown}
                 className="message-textarea"
             />
+            {/* New Chat Button using react-icons */}
+            <button onClick={handleNewChat} className="new-chat-button" title="New Chat">
+                <FaPencil size={16} />
+            </button>
             <button onClick={handleSend} className="send-button" title="Send">
-                ↑
+                <FaArrowUp size={16} />
             </button>
         </div>
     );

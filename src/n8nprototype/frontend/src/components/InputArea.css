@@ -18,14 +18,33 @@
     margin-right: 10px;
 }
 
+/* Shared button styles */
+.new-chat-button,
 .send-button {
-    background-color: #4CAF50;
     border: none;
     color: white;
     padding: 10px 15px;
     font-size: 18px;
     border-radius: 5px;
     cursor: pointer;
+}
+
+/* New Chat button styles */
+.new-chat-button {
+    background-color: #007bff;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.new-chat-button:hover {
+    background-color: #0069d9;
+}
+
+/* Send button styles */
+.send-button {
+    background-color: #4CAF50;
 }
 
 .send-button:hover {
