@@ -1,0 +1,21 @@
+.message {
+    max-width: 70%;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 10px;
+    word-wrap: break-word;
+}
+
+/* User messages: right-aligned with a light green background */
+.user-message {
+    background-color: #d4f7d4;
+    margin-left: auto;
+    text-align: right;
+}
+
+/* System messages: left-aligned with a whitish background */
+.system-message {
+    background-color: #ffffff;
+    margin-right: auto;
+    text-align: left;
+}
