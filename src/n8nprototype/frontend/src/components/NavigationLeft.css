@@ -1,0 +1,24 @@
+/* src/components/NavigationLeft.css */
+.navigation-left {
+    background-color: #f0f0f0;
+    padding: 20px;
+    width: 200px;
+    box-sizing: border-box;
+    height: 100vh;
+    border-right: 1px solid #ddd;
+}
+
+.navigation-left h2 {
+    margin-top: 0;
+    font-size: 1.5rem;
+}
+
+.navigation-left ul {
+    list-style: none;
+    padding: 0;
+}
+
+.navigation-left li {
+    margin: 10px 0;
+    cursor: pointer;
+}

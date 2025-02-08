@@ -53,7 +53,6 @@ const InputArea = ({ onSend, onNewChat }) => {
                 onKeyDown={handleKeyDown}
                 className="message-textarea"
             />
-            {/* New Chat Button using react-icons */}
             <button onClick={handleNewChat} className="new-chat-button" title="New Chat">
                 <BsPencilSquare  size={16} />
             </button>

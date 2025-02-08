@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import ChatWindow from './components/ChatWindow';
 import InputArea from './components/InputArea';
+import NavigationLeft from './components/NavigationLeft';
 import './App.css';
 
 function App() {
@@ -37,15 +38,19 @@ function App() {
         }
     };
 
-    // New function to clear the chat
+    // Clear chat (flush messages)
     const clearChat = () => {
         setMessages([]);
     };
 
     return (
-        <div className="app-container">
-            <ChatWindow messages={messages} />
-            <InputArea onSend={sendMessage} onNewChat={clearChat} />
+        <div className="app-wrapper">
+            <NavigationLeft />
+            <div className="main-content">
+                <ChatWindow messages={messages} />
+                <InputArea onSend={sendMessage} onNewChat={clearChat} />
+            </div>
+            <div className="right-sidebar"></div>
         </div>
     );
 }

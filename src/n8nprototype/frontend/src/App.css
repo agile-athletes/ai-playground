@@ -1,6 +1,22 @@
-.app-container {
+/* src/App.css */
+.app-wrapper {
+    display: flex;
+    height: 100vh;
+    /* Narrow the view by 0.7vw on each side */
+    width: calc(100vw - 1.4vw);
+    margin: 0 auto;
+}
+
+/* Main chat area styling */
+.main-content {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    font-family: Arial, sans-serif;
+    background-color: #ffffff;
+}
+
+/* Right sidebar with a slightly darker light grey background */
+.right-sidebar {
+    width: 200px;
+    background-color: #e0e0e0;
 }
