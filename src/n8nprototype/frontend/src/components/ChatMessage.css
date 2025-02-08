@@ -1,21 +1,35 @@
-.message {
-    max-width: 70%;
+/* src/components/ChatMessage.css */
+
+/* Container takes full width and aligns its content based on the message role */
+.message-container {
+    width: 100%;
     margin: 10px 0;
-    padding: 10px;
-    border-radius: 10px;
-    word-wrap: break-word;
 }
 
-/* User messages: right-aligned with a light green background */
-.user-message {
-    background-color: #d4f7d4;
-    margin-left: auto;
+.message-container.user {
     text-align: right;
 }
 
-/* System messages: left-aligned with a whitish background */
-.system-message {
-    background-color: #ffffff;
-    margin-right: auto;
+.message-container.system {
     text-align: left;
+}
+
+/* The message bubble is inline-block so its width adjusts to its content */
+.message-bubble {
+    display: inline-block;
+    max-width: 70%;
+    padding: 10px;
+    border-radius: 10px;
+    word-wrap: break-word;
+    font-size: inherit;
+    font-family: inherit;
+}
+
+/* Colors for each type */
+.message-container.user .message-bubble {
+    background-color: #d4f7d4;
+}
+
+.message-container.system .message-bubble {
+    background-color: #ffffff;
 }

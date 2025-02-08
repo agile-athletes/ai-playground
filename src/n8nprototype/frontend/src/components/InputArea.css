@@ -7,19 +7,19 @@
     background-color: #eee;
 }
 
-.file-picker {
-    margin-right: 10px;
-}
-
 .message-textarea {
     flex: 1;
     resize: none;
     height: 50px;
     padding: 5px;
     margin-right: 10px;
+    border-radius: 10px;
+    background-color: #d4f7d4;
+    border: 1px solid #ccc; /* Optional: adds a light border */
+    font-size: inherit;
+    font-family: inherit;
 }
 
-/* Shared button styles */
 .new-chat-button,
 .send-button {
     border: none;
@@ -30,7 +30,6 @@
     cursor: pointer;
 }
 
-/* New Chat button styles */
 .new-chat-button {
     background-color: #007bff;
     margin-right: 10px;
@@ -43,7 +42,6 @@
     background-color: #0069d9;
 }
 
-/* Send button styles */
 .send-button {
     background-color: #4CAF50;
 }

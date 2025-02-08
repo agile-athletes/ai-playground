@@ -1,14 +1,17 @@
+// src/components/ChatMessage.js
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import './ChatMessage.css';
 
 const ChatMessage = ({ message }) => {
     const isUser = message.role === 'user';
-    const messageClass = isUser ? 'message user-message' : 'message system-message';
+    const containerClass = isUser ? 'message-container user' : 'message-container system';
 
     return (
-        <div className={messageClass}>
-            <ReactMarkdown>{message.content}</ReactMarkdown>
+        <div className={containerClass}>
+            <div className="message-bubble">
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+            </div>
         </div>
     );
 };

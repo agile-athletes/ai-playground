@@ -21,7 +21,7 @@ const NavigationLeft = () => {
                 <li>
                     {/* Button to open ModalFilePicker */}
                     <button onClick={openFilePicker} className="open-file-picker-button">
-                        Open ModalFilePicker
+                        Upload Workflow Policy
                     </button>
                 </li>
             </ul>
