@@ -1,6 +1,7 @@
 // src/components/InputArea.js
 import React, { useState } from 'react';
-import {FaArrowUp, FaPencil} from 'react-icons/fa';
+import {AiOutlineEnter } from 'react-icons/ai';
+import {BsPencilSquare } from 'react-icons/bs';
 import './InputArea.css';
 
 const InputArea = ({ onSend, onNewChat }) => {
@@ -54,10 +55,10 @@ const InputArea = ({ onSend, onNewChat }) => {
             />
             {/* New Chat Button using react-icons */}
             <button onClick={handleNewChat} className="new-chat-button" title="New Chat">
-                <FaPencil size={16} />
+                <BsPencilSquare  size={16} />
             </button>
             <button onClick={handleSend} className="send-button" title="Send">
-                <FaArrowUp size={16} />
+                <AiOutlineEnter size={16} />
             </button>
         </div>
     );
