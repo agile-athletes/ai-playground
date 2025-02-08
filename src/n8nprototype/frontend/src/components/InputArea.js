@@ -15,15 +15,6 @@ const InputArea = ({ onSend, onNewChat }) => {
         setSelectedFile(null);
     };
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file && file.type === 'application/pdf') {
-            setSelectedFile(file);
-        } else {
-            alert('Please select a PDF file.');
-        }
-    };
-
     // Prevent sending on pressing Enter in the textarea.
     const handleKeyDown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -40,12 +31,6 @@ const InputArea = ({ onSend, onNewChat }) => {
 
     return (
         <div className="input-area">
-            <input
-                type="file"
-                accept="application/pdf"
-                onChange={handleFileChange}
-                className="file-picker"
-            />
             <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
