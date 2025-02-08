@@ -1,6 +1,6 @@
-// Example snippet from App.js:
+// src/components/NavigationLeft.js
+import { useState } from "react";
 import ModalFilePicker from "./ModalFilePicker";
-import {useState} from "react";
 import './NavigationLeft.css';
 
 const NavigationLeft = () => {
@@ -18,9 +18,12 @@ const NavigationLeft = () => {
     return (
         <nav className="navigation-left">
             <ul>
-                <li>Chat 1</li>
-                <li>Chat 2</li>
-                <li>Chat 3</li>
+                <li>
+                    {/* Button to open ModalFilePicker */}
+                    <button onClick={openFilePicker} className="open-file-picker-button">
+                        Open ModalFilePicker
+                    </button>
+                </li>
             </ul>
             {showFilePicker && (
                 <ModalFilePicker
@@ -30,6 +33,6 @@ const NavigationLeft = () => {
             )}
         </nav>
     );
-}
+};
 
 export default NavigationLeft;

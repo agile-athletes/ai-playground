@@ -25,6 +25,20 @@
     margin-top: 0;
 }
 
+.choose-file-button {
+    margin: 20px 0;
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.choose-file-button:hover {
+    background-color: #0069d9;
+}
+
 .modal-buttons {
     margin-top: 20px;
     display: flex;
