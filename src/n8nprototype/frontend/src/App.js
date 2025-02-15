@@ -15,7 +15,7 @@ function App() {
 
         try {
             const response = await fetch(
-                'http://localhost:5678/webhook/5b58f7ff-2c87-4850-8cce-583ee8009f04',
+                'http://localhost:5678/webhook-test/98772d9f-9897-4030-935b-3e5efeed970a',
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

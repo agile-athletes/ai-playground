@@ -5,7 +5,7 @@ import {BsPencilSquare } from 'react-icons/bs';
 import './InputArea.css';
 
 const InputArea = ({ onSend, onNewChat }) => {
-    const [text, setText] = useState('');
+    const [text, setText] = useState('New artificial intelligence technology is challenging our core business of on-demand translation.');
     const [selectedFile, setSelectedFile] = useState(null);
 
     const handleSend = () => {
@@ -34,7 +34,7 @@ const InputArea = ({ onSend, onNewChat }) => {
             <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="Type your message here..."
+                // placeholder="New artificial intelligence technology is challenging our core business of on-demand translation."
                 onKeyDown={handleKeyDown}
                 className="message-textarea"
             />
