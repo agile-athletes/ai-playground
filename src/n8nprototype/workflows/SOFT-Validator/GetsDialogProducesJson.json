@@ -1,0 +1,149 @@
+{
+  "name": "GetsDialogProducesJson",
+  "nodes": [
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "837de23a-c640-4acf-bb2b-612c49b642fe",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        620,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {}
+      },
+      "id": "1e8b1891-6180-4d27-b926-583a9eb9fe0e",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        40,
+        280
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "Cc5LhcW6D019Grb0",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "98772d9f-9897-4030-935b-3e5efeed970a",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "df0fef2c-de9f-47c4-8633-accb1ec79b06",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -220,
+        0
+      ],
+      "webhookId": "98772d9f-9897-4030-935b-3e5efeed970a"
+    },
+    {
+      "parameters": {
+        "jsCode": "// add the system message to the dialog\nconst messages = $('Webhook').first().json.body;\nconst rawContent = $('Basic LLM Chain').first().json.text;\n\n// Remove the `````` wrapper\nmessages.push({\n  \"role\": \"system\",\n  \"content\": rawContent\n});\n\nreturn messages"
+      },
+      "id": "4392bb1f-a1ef-48df-b5d8-107cd0d0c638",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        420,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an assistant to management tasked with evaluating whether submitted issue\nUSER_TEXT=\"{{ $json.body.filter(item => item.role === 'user').pop().content }}\" align\nwith the **Internal Issue Collection Policy** provided below.\n\nYour objectives are to:\n\n1. **List each identified gap or violation** in the submitted issue relative to the policy.\n2. **Provide specific recommendations** to address each identified gap or violation, ensuring compliance with the policy guidelines.\n\nExpress the result in markdown format.\n\n<EVALUATION>\n**Evaluate the accuracy:**\n\nThe markdown response begins with the subtitle \"## Accuracy\" followed by estimated value in %.\n\nAccuracy indicates the conformance of the USER_TEXT with the POLICY. It is your evaluation of the\nquality of the managers USER_TEXT. Carefully check if all markdown elements of the policy can be found in USER_TEXT.\n</EVALUATION>\n<POLICY>\n\n# Internal Issue Collection Policy\n\nThe organization has to identify and then discuss our so-called planning issues.\n\nAll the managers in the organization are tasked to write down and mark 8 to 10 of the planning issues they\nface in their unit. The aim of this effort is to collectively protect what is satisfactory in the present operations,\nrecognize and pursue new opportunities, correct faults in present operations, and recognize and avert new threats\nin the future.\n\n**A short title for the issue**\n\nIf not present in USER_TEXT, add a subtitle \"## Title\" followed by text with a copy or suggestion.\n\n**SOFT question**\nThe data to be gathered is to be best compiled by organizing them in answers to four (SOFT) questions. Select one of:\n\n1. What must be done to safeguard the __satisfactory__ in present operations?\n2. What must be done to open the door to __opportunities__ in future operations?\n3. What must be done to fix the cause of __faults__ of present operations?\n4. What must be done to thwart, ameliorate or avert the __threats__ to future operations?\n\nAdd the subtitle \"## SOFT question\" followed by a copy or suggestion.\n\n**if NOT one of the SOFT questions is found in USER_TEXT**\n\nGenerate each of the four SOFT questions with suggestions for each question.\n\n**Formulate a description**\n\nAdd the subtitle \"## Description\" followed by a copy or suggestion.\n\n**References of sources or facts**\n\nAdd the subtitle \"# References\" followed by a copy or suggestion.\n\n**Possible actions and resource requirements**\n\nAdd the subtitle \"## Possible actions\" followed by a copy or suggestion.\n\n### Response Format:\n\nEnsure that the response content is a valid markdown.",
+        "hasOutputParser": true
+      },
+      "id": "a1db489c-49ee-442f-bfc5-773c475e13b7",
+      "name": "Basic LLM Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        40,
+        60
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "46fb092c-a6f8-4bd6-aa87-d2827b18bacf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "68f9e66783549a11e344292a1ef8ccb1a9d2307f134c3a15405499ae2f6cb69a"
+  },
+  "id": "X5VS5wkKusxR2BDr",
+  "tags": [
+    {
+      "name": "Design",
+      "id": "TV20jI4XkgLHPpxz",
+      "createdAt": "2025-02-14T08:40:25.904Z",
+      "updatedAt": "2025-02-14T08:40:25.904Z"
+    }
+  ]
+}

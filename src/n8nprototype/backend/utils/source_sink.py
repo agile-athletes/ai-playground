@@ -33,8 +33,8 @@ def sink_from_n8n(data):
 # Example usage
 if __name__ == "__main__":
     # Example webhook URL (replace with your actual n8n webhook URL)
-    webhook_url = "http://localhost:5678/webhook-test/5b58f7ff-2c87-4850-8cce-583ee8009f04"
-        # webhook_url = "http://localhost:5678/webhook/5b58f7ff-2c87-4850-8cce-583ee8009f04"
+    # webhook_url = "http://localhost:5678/webhook-test/5b58f7ff-2c87-4850-8cce-583ee8009f04"
+    webhook_url = "http://localhost:5678/webhook/5b58f7ff-2c87-4850-8cce-583ee8009f04"
 
     sample_data = [{"role":"user","content":"Loop these messages back."}]
     # Source example
