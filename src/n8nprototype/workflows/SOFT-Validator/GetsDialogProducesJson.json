@@ -3,7 +3,6 @@
   "nodes": [
     {
       "parameters": {
-        "respondWith": "allIncomingItems",
         "options": {}
       },
       "id": "837de23a-c640-4acf-bb2b-612c49b642fe",
@@ -11,14 +10,16 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        620,
-        180
+        480,
+        100
       ]
     },
     {
       "parameters": {
         "model": "gpt-4o-mini",
-        "options": {}
+        "options": {
+          "temperature": 0.7
+        }
       },
       "id": "1e8b1891-6180-4d27-b926-583a9eb9fe0e",
       "name": "OpenAI Chat Model",
@@ -54,21 +55,8 @@
     },
     {
       "parameters": {
-        "jsCode": "// add the system message to the dialog\nconst messages = $('Webhook').first().json.body;\nconst rawContent = $('Basic LLM Chain').first().json.text;\n\n// Remove the `````` wrapper\nmessages.push({\n  \"role\": \"system\",\n  \"content\": rawContent\n});\n\nreturn messages"
-      },
-      "id": "4392bb1f-a1ef-48df-b5d8-107cd0d0c638",
-      "name": "Code",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        420,
-        60
-      ]
-    },
-    {
-      "parameters": {
         "promptType": "define",
-        "text": "=You are an assistant to management tasked with evaluating whether submitted issue\nUSER_TEXT=\"{{ $json.body.filter(item => item.role === 'user').pop().content }}\" align\nwith the **Internal Issue Collection Policy** provided below.\n\nYour objectives are to:\n\n1. **List each identified gap or violation** in the submitted issue relative to the policy.\n2. **Provide specific recommendations** to address each identified gap or violation, ensuring compliance with the policy guidelines.\n\nExpress the result in markdown format.\n\n<EVALUATION>\n**Evaluate the accuracy:**\n\nThe markdown response begins with the subtitle \"## Accuracy\" followed by estimated value in %.\n\nAccuracy indicates the conformance of the USER_TEXT with the POLICY. It is your evaluation of the\nquality of the managers USER_TEXT. Carefully check if all markdown elements of the policy can be found in USER_TEXT.\n</EVALUATION>\n<POLICY>\n\n# Internal Issue Collection Policy\n\nThe organization has to identify and then discuss our so-called planning issues.\n\nAll the managers in the organization are tasked to write down and mark 8 to 10 of the planning issues they\nface in their unit. The aim of this effort is to collectively protect what is satisfactory in the present operations,\nrecognize and pursue new opportunities, correct faults in present operations, and recognize and avert new threats\nin the future.\n\n**A short title for the issue**\n\nIf not present in USER_TEXT, add a subtitle \"## Title\" followed by text with a copy or suggestion.\n\n**SOFT question**\nThe data to be gathered is to be best compiled by organizing them in answers to four (SOFT) questions. Select one of:\n\n1. What must be done to safeguard the __satisfactory__ in present operations?\n2. What must be done to open the door to __opportunities__ in future operations?\n3. What must be done to fix the cause of __faults__ of present operations?\n4. What must be done to thwart, ameliorate or avert the __threats__ to future operations?\n\nAdd the subtitle \"## SOFT question\" followed by a copy or suggestion.\n\n**if NOT one of the SOFT questions is found in USER_TEXT**\n\nGenerate each of the four SOFT questions with suggestions for each question.\n\n**Formulate a description**\n\nAdd the subtitle \"## Description\" followed by a copy or suggestion.\n\n**References of sources or facts**\n\nAdd the subtitle \"# References\" followed by a copy or suggestion.\n\n**Possible actions and resource requirements**\n\nAdd the subtitle \"## Possible actions\" followed by a copy or suggestion.\n\n### Response Format:\n\nEnsure that the response content is a valid markdown.",
+        "text": "=You are an assistant to management tasked with evaluating whether submitted issue\nUSER_TEXT=\"{{ $json.body.filter(item => item.role === 'user').pop().content }}\" align\nwith the **Internal Issue Collection Policy** provided below.\n\nYour objectives are to:\n\n1. **List each identified gap or violation** in the submitted issue relative to the policy.\n2. **Provide specific recommendations** to address each identified gap or violation, ensuring compliance with the policy guidelines.\n\nExpress the result as attentions with a weighted rating to indicate relevance or accuracy for each.\n\n<EVALUATION>\n**Evaluate the accuracy:**\n\nCreate a new attention as the JSON data using the Sequential Data Entry approach.\nThe new attention should be the root having id=1 and \"parent_id\": null with the following details:\n\n- Name: \"Accuracy of USER_TEXT\"\n- Value: \"<accuracy in %>\"\n- Weight: \"<confidence estimation>\"\n\nAccuracy indicates the conformance of the USER_TEXT with the POLICY. It is your evaluation of the\nquality of the managers USER_TEXT. Carefully check if all attentions of the policy can be found in USER_TEXT.\n</EVALUATION>\n<POLICY>\n# Internal Issue Collection Policy\n\n**Determine the purpose of our organization**:\n\nBefore determining our purpose, the organization has to identify and then discuss our so-called planning issues.\n\nAll the managers in the organization are tasked to write down and mark 8 to 10 of the planning issues they\nface in their unit. The aim of this effort is to collectively protect what is satisfactory in the present operations,\nrecognize and pursue new opportunities, correct faults in present operations, and recognize and avert new threats\nin the future.\n\n**A short title for the issue**\n\nAdd a new attention to the JSON data using the Sequential Data Entry approach for the SOFT question.\nThe new attention should be nested under \"Overall Accuracy\" with the following details:\n\n- Name: \"Title\"\n- Value: \"<copy or suggestion for the title of issue>\"\n- Weight: \"<accuracy>\"\n\n**SOFT question**\nThe data to be gathered is to be best compiled by organizing them in answers to four (SOFT) questions. Select one of:\n\n1. What must be done to safeguard the __satisfactory__ in present operations?\n2. What must be done to open the door to __opportunities__ in future operations?\n3. What must be done to fix the cause of __faults__ of present operations?\n4. What must be done to thwart, ameliorate or avert the __threats__ to future operations?\n\n**if NOT one of the SOFT questions is found in USER_TEXT**\n\nAdd a new attention to the JSON data using the Sequential Data Entry approach for each SOFT question.\nThe new attention item should be nested under \"Title\" with the following details:\n\n- Name: \"SOFT Question\"\n- Value: \"<suggestion of the SOFT question>\"\n- Weight: \"<accuracy>\"\n\n**else if one of the SOFT questions is found in USER_TEXT**\n\nAdd a new attention to the JSON data using the Sequential Data Entry approach for that SOFT question.\nThe new attention should be nested under \"Title\" with the following details:\n\n- Name: \"SOFT Question\"\n- Value: \"<extraction of the SOFT question>\"\n- Weight: \"<accuracy>\"\n\n**Formulate a description**\n\nAdd a new attention to the JSON data using the Sequential Data Entry approach for the SOFT question.\nThe new attention should be nested under \"SOFT Question\" with the following details:\n\n- Name: \"Description\"\n- Value: \"<copy or suggestion for the description of the issue>\"\n- Weight: \"<accuracy>\"\n\n\n**References of sources or facts**\n\nAdd a new attention to the JSON data using the Sequential Data Entry approach for the SOFT question.\nThe new attention should be nested under \"SOFT Question\" with the following details:\n\n- Name: \"Reference sources or facts\"\n- Value: \"<copy or suggestion for the description of the issue>\"\n- Weight: \"<accuracy>\"\n\n**Possible actions and resource requirements**\n\nAdd a new attention to the JSON data using the Sequential Data Entry approach for the SOFT question.\nThe new attention should be nested under \"SOFT Question\" with the following details:\n\n- Name: \"Possible actions and resource requirements\"\n- Value: \"<copy or suggestion for the description of the issue>\"\n- Weight: \"<accuracy>\"\n  </POLICY>\n\n### Response Format:\nYour response should adhere to the following JSON structure:\n\n```json\n{\n  \"attentions\": [\n    {\n      \"id\": 1,\n      \"name\": \"Aspect Name\",\n      \"value\": \"Aspect Value\",\n      \"weight\": \"0.0-1.0\",\n      \"parent_id\": null\n    }\n  ]\n}\n```\n\nEnsure that each new attention has a unique \"id\" and the \"parent_id\" corresponds to the \"id\" of its parents \"Aspect Name\".\n\nEnsure that the response content is a valid json and only json.\n",
         "hasOutputParser": true
       },
       "id": "a1db489c-49ee-442f-bfc5-773c475e13b7",
@@ -105,22 +93,11 @@
         ]
       ]
     },
-    "Code": {
-      "main": [
-        [
-          {
-            "node": "Respond to Webhook",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Basic LLM Chain": {
       "main": [
         [
           {
-            "node": "Code",
+            "node": "Respond to Webhook",
             "type": "main",
             "index": 0
           }
@@ -132,7 +109,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "46fb092c-a6f8-4bd6-aa87-d2827b18bacf",
+  "versionId": "30a43d6c-09ce-4d2f-a1e1-644310860a25",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "68f9e66783549a11e344292a1ef8ccb1a9d2307f134c3a15405499ae2f6cb69a"
@@ -140,10 +117,10 @@
   "id": "X5VS5wkKusxR2BDr",
   "tags": [
     {
-      "name": "Design",
-      "id": "TV20jI4XkgLHPpxz",
       "createdAt": "2025-02-14T08:40:25.904Z",
-      "updatedAt": "2025-02-14T08:40:25.904Z"
+      "updatedAt": "2025-02-14T08:40:25.904Z",
+      "id": "TV20jI4XkgLHPpxz",
+      "name": "Design"
     }
   ]
 }
