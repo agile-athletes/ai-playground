@@ -7,6 +7,10 @@ export function parseJsonStringWithOpenAiTics(str) {
     return JSON.parse(cleaned);
 }
 
+export function testDataAsJson() {
+    return parseJsonStringWithOpenAiTics(input);
+}
+
 // Example usage:
 const input = `\`\`\`json
 {
