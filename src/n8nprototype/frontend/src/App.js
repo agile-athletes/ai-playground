@@ -15,7 +15,7 @@ function App() {
         setMessages((prevMessages) => [...prevMessages, newMessage]);
     }
 
-    const sendMessage = async (userContent, file) => {
+    const sendMessage = async (userContent) => {
         const userMessage = { role: 'user', content: userContent };
         addMessageToMessages(userMessage);
 
@@ -34,10 +34,6 @@ function App() {
                         body: JSON.stringify(messages),
                     }
                 );
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
 
                 const data = await response.json();
                 data_as_json = parseJsonStringWithOpenAiTics(data.text);
