@@ -1,36 +1,36 @@
-// src/components/NavigationLeft.js
-import { useState } from "react";
-import ModalFilePicker from "./ModalFilePicker";
 import './NavigationLeft.css';
+import WorkflowButton from './WorkflowButton';
 
-const NavigationLeft = () => {
-    const [showFilePicker, setShowFilePicker] = useState(false);
+// Filter out all attentions with type 'workflow'
+const getWorkflowAttentions = (jsonWithAttentions) => {
+    if (!jsonWithAttentions || !jsonWithAttentions.attentions) return [];
+    return jsonWithAttentions.attentions.filter(
+        (attention) => attention.value && attention.value.type === 'workflow'
+    );
+};
 
-    const openFilePicker = () => setShowFilePicker(true);
-    const closeFilePicker = () => setShowFilePicker(false);
+// Returns true if the given attention has the highest weight among all workflow attentions
+const isHighestWorkflowAttention = (attention, workflowAttentions) => {
+    if (workflowAttentions.length === 0) return false;
+    const maxWeight = Math.max(...workflowAttentions.map((att) => parseFloat(att.weight)));
+    return parseFloat(attention.weight) === maxWeight;
+};
 
-    const handleFileSelect = (file) => {
-        // Do something with the file
-        console.log('Selected file:', file);
-        closeFilePicker();
-    };
+const NavigationLeft = ({jsonWithAttentions}) => {
+    const workflowAttentions = getWorkflowAttentions(jsonWithAttentions);
 
     return (
         <nav className="navigation-left">
             <ul>
-                <li>
-                    {/* Button to open ModalFilePicker */}
-                    <button onClick={openFilePicker} className="open-file-picker-button">
-                        Upload Workflow Policy
-                    </button>
-                </li>
+                {workflowAttentions.map((attention) => (
+                    <li key={attention.id}>
+                        <WorkflowButton
+                            attention={attention}
+                            isHighest={isHighestWorkflowAttention(attention, workflowAttentions)}
+                        />
+                    </li>
+                ))}
             </ul>
-            {showFilePicker && (
-                <ModalFilePicker
-                    onFileSelect={handleFileSelect}
-                    onCancel={closeFilePicker}
-                />
-            )}
         </nav>
     );
 };
