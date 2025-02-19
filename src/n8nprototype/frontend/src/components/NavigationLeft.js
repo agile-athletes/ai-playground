@@ -3,8 +3,8 @@ import WorkflowButton from './WorkflowButton';
 
 // Filter out all attentions with type 'workflow'
 const getWorkflowAttentions = (jsonWithAttentions) => {
-    if (!jsonWithAttentions || !jsonWithAttentions.attentions) return [];
-    return jsonWithAttentions.attentions.filter(
+    if (!jsonWithAttentions || !jsonWithAttentions.workflows) return [];
+    return jsonWithAttentions.workflows.filter(
         (attention) => attention.value && attention.value.type === 'workflow'
     );
 };

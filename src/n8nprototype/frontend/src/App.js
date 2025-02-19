@@ -6,7 +6,7 @@ import NavigationLeft from './components/NavigationLeft';
 import {parseJsonStringWithOpenAiTics} from './components/helpers/json_helper'
 import {JsonToMarkdownConverter} from './components/helpers/json_to_markdown'
 import {
-    hasWorkflowSelectionParent, selectHighestWorkflowAttention,
+    hasWorkflowSelectionParent, selectHighestWorkflow,
     workflowSelectionSample
 } from './components/helpers/experiments'
 import './App.css';
@@ -46,7 +46,7 @@ function App() {
             }
 
             if (hasWorkflowSelectionParent(data_as_json)) {
-                selectHighestWorkflowAttention(data_as_json.attentions)
+                selectHighestWorkflow(data_as_json.workflows)
                 setWorkflows(data_as_json); // navigation changed
             }
             else {
