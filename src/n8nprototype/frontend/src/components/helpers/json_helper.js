@@ -2,8 +2,6 @@
 export function parseJsonStringWithOpenAiTics(str) {
     // Remove the leading ```json and trailing ``` markers
     const cleaned = str.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-    console.log(cleaned)
-    // Parse and return the JSON object
     return JSON.parse(cleaned);
 }
 
@@ -81,6 +79,3 @@ const input = `\`\`\`json
   ]
 }
 \`\`\``;
-
-const result = parseJsonStringWithOpenAiTics(input);
-console.log(result);

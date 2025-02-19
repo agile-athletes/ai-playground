@@ -9,14 +9,7 @@ const getWorkflowAttentions = (jsonWithAttentions) => {
     );
 };
 
-// Returns true if the given attention has the highest weight among all workflow attentions
-const isHighestWorkflowAttention = (attention, workflowAttentions) => {
-    if (workflowAttentions.length === 0) return false;
-    const maxWeight = Math.max(...workflowAttentions.map((att) => parseFloat(att.weight)));
-    return parseFloat(attention.weight) === maxWeight;
-};
-
-const NavigationLeft = ({jsonWithAttentions}) => {
+const NavigationLeft = ({jsonWithAttentions, setWebhookUrl}) => {
     const workflowAttentions = getWorkflowAttentions(jsonWithAttentions);
 
     return (
@@ -26,7 +19,7 @@ const NavigationLeft = ({jsonWithAttentions}) => {
                     <li key={attention.id}>
                         <WorkflowButton
                             attention={attention}
-                            isHighest={isHighestWorkflowAttention(attention, workflowAttentions)}
+                            setWebhookUrl={setWebhookUrl}
                         />
                     </li>
                 ))}

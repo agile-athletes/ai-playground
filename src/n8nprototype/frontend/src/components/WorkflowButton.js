@@ -1,12 +1,14 @@
-import React from 'react';
+import React, {useState} from 'react';
 import './WorkflowButton.css'
 
-const WorkflowButton = ({attention, isHighest}) => {
+const WorkflowButton = ({attention, setWebhookUrl}) => {
+    const [selected, setSelected] = useState(attention.value.selected)
     if (!attention || !attention.value || !attention.value.label) return null;
 
     const handleClick = () => {
-        // Navigate to the workflow URL
-        window.location.href = attention.value.url;
+        attention.value.selected = !attention.value.selected
+        setSelected(attention.value.selected)
+        setWebhookUrl(attention.value.url)
     };
 
     const baseStyle = {
@@ -17,7 +19,7 @@ const WorkflowButton = ({attention, isHighest}) => {
     };
 
     // Use a blue background for the highest workflow attention, otherwise a gray background
-    const style = isHighest
+    const style = selected
         ? {...baseStyle, backgroundColor: '#007bff'}
         : {...baseStyle, backgroundColor: '#6c757d'};
 
