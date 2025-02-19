@@ -1,7 +1,14 @@
 /* src/App.css */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
 .app-wrapper {
     display: flex;
-    height: 100vh;
+    min-height: -webkit-fill-available;
+    height: 100dvh;
     /* Narrow the view by 0.7vw on each side */
     width: calc(100vw - 1.4vw);
     margin: 0 auto;
@@ -19,4 +26,28 @@
 .right-sidebar {
     width: 200px;
     background-color: #e0e0e0;
+}
+
+/* Media queries for mobile devices */
+@media (max-width: 768px) {
+    .app-wrapper {
+        flex-direction: column;
+        width: 100vw;
+        height: auto;
+    }
+
+    /* Stack the navigation at the top */
+    .navigation-left {
+        width: 100%;
+    }
+
+    /* Main content takes full width */
+    .main-content {
+        width: 100%;
+    }
+
+    /* Optionally hide or collapse the right sidebar on mobile */
+    .right-sidebar {
+        display: none;
+    }
 }
