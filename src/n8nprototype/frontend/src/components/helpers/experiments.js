@@ -57,8 +57,7 @@ export function workflowSelectionStart() {
 
 
 export const hasWorkflowSelectionParent = (fromAiServer) => {
-    // return fromAiServer.workflows  && typeof fromAiServer.workflows === "object"
-    return true
+    return fromAiServer.workflows  && typeof fromAiServer.workflows === "object"
 }
 
 // Returns true if the given attention has the highest weight among all workflow attentions
