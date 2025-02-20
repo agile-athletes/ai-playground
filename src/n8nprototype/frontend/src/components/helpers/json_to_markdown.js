@@ -1,8 +1,7 @@
 export class JsonToMarkdownConverter {
-    constructor(jsonData) {
+    constructor(attentions) {
         // Initialize with JSON data
-        this.jsonData = jsonData;
-        this.attentions = jsonData.attentions || [];
+        this.attentions = attentions || [];
         this.tree = this.buildTree();
         this.nameToNode = this.mapNamesToNodes();
     }

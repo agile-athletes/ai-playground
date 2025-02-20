@@ -1,21 +1,12 @@
 import './NavigationLeft.css';
 import WorkflowButton from './WorkflowButton';
 
-// Filter out all attentions with type 'workflow'
-const getWorkflowAttentions = (jsonWithAttentions) => {
-    if (!jsonWithAttentions || !jsonWithAttentions.workflows) return [];
-    return jsonWithAttentions.workflows.filter(
-        (attention) => attention.value && attention.value.type === 'workflow'
-    );
-};
-
-const NavigationLeft = ({jsonWithAttentions, setWebhookUrl}) => {
-    const workflowAttentions = getWorkflowAttentions(jsonWithAttentions);
+const NavigationLeft = ({workflows, setWebhookUrl}) => {
 
     return (
         <nav className="navigation-left">
             <ul>
-                {workflowAttentions.map((attention) => (
+                {workflows.map((attention) => (
                     <li key={attention.id}>
                         <WorkflowButton
                             attention={attention}
