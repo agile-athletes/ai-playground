@@ -6,10 +6,10 @@ const NavigationLeft = ({workflows, setWebhookUrl}) => {
     return (
         <nav className="navigation-left">
             <ul>
-                {workflows.map((attention) => (
-                    <li key={attention.id}>
+                {workflows.map((workflow) => (
+                    <li key={workflow.id}>
                         <WorkflowButton
-                            attention={attention}
+                            workflow={workflow}
                             setWebhookUrl={setWebhookUrl}
                         />
                     </li>

@@ -1,14 +1,15 @@
 import React, {useState} from 'react';
 import './WorkflowButton.css'
 
-const WorkflowButton = ({attention, setWebhookUrl}) => {
-    const [selected, setSelected] = useState(attention.value.selected)
-    if (!attention || !attention.value || !attention.value.label) return null;
+const WorkflowButton = ({workflow, setWebhookUrl}) => {
+    const [selected, setSelected] = useState(workflow.value.selected)
+    if (!workflow || !workflow.value || !workflow.value.label) return null;
 
     const handleClick = () => {
-        attention.value.selected = !attention.value.selected
-        setSelected(attention.value.selected)
-        setWebhookUrl(attention.value.url)
+        const selection = workflow.value.selected;
+        if ( selection ) { return; }  // can be selected but not deselected
+        setSelected(selection)
+        setWebhookUrl(workflow.value.url)
     };
 
     const baseStyle = {
@@ -25,7 +26,7 @@ const WorkflowButton = ({attention, setWebhookUrl}) => {
 
     return (
         <button className='open-workflow-button' onClick={handleClick} style={style}>
-            {attention.value.label}
+            {workflow.value.label}
         </button>
     );
 };

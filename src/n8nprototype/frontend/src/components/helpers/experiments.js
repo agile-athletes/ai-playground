@@ -33,7 +33,7 @@ export function workflowSelectionSample() {
                     "selected": false,
                     "url": "http://localhost:5678/webhook/98772d9f-9897-4030-935b-3e5efeed970a"
                 },
-                "weight": "0.7",
+                "weight": "0.1",
                 "parent_id": null
             },
             {
@@ -45,7 +45,7 @@ export function workflowSelectionSample() {
                     "selected": false,
                     "url": "http://localhost:5678/webhook/98772d9f-9897-4030-935b-3e5efeed970b"
                 },
-                "weight": "0.1",
+                "weight": "0.7",
                 "parent_id": null
             }
         ]
@@ -88,10 +88,19 @@ const isHighestWorkflowAttention = (attention, workflows) => {
     return parseFloat(attention.weight) === maxWeight;
 };
 
+export const deSelectWorkflows = (workflows) => {
+    workflows.forEach((workflow) => {
+        workflow.value.selected = false;
+    });
+    return workflows;
+}
+
 export const selectHighestWorkflow = (workflows) => {
     workflows.forEach((workflow) => {
         if (workflow.value.selected !== undefined) {
             workflow.value.selected = isHighestWorkflowAttention(workflow, workflows)
+            return workflow;
         }
     });
+    return undefined;
 }

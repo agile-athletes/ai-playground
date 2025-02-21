@@ -11,10 +11,12 @@ import {
 } from './components/helpers/experiments'
 import './App.css';
 
+const WEBHOOK_URL = 'http://localhost:5678/webhook-test/62eb6dc8-452e-4b0f-a461-615c6eda1ebe';
+
 function App() {
-    // const [messages, setMessages] = useState([]);
+
     const [messages, setMessages] = useState([]);
-    const [webhookUrl, setWebhookUrl] = useState('http://localhost:5678/webhook-test/62eb6dc8-452e-4b0f-a461-615c6eda1ebe'); // SelectWorkflowExperiment
+    const [webhookUrl, setWebhookUrl] = useState(WEBHOOK_URL); // SelectWorkflowExperiment
     const [workflows, setWorkflows] = useState([]);
     const [mock] = useState(true);
 
@@ -45,12 +47,16 @@ function App() {
             }
 
             const workflows = filterByName(data_as_json, "workflows");
-            selectHighestWorkflow(workflows);
+            const selectedWorkflow = selectHighestWorkflow(workflows);
+            setWebhookUrl(selectedWorkflow ? selectedWorkflow.value.url : WEBHOOK_URL);
             setWorkflows(workflows);
+
             const attentions = filterByName(data_as_json, "attentions")
             const data_as_markdown = new JsonToMarkdownConverter(attentions).toMarkdown();
             const message_from_n8n = {role: 'system', content: data_as_markdown};
             addMessageToMessages(message_from_n8n);
+
+            console.log(webhookUrl)
 
         } catch (error) {
             console.error('Error sending message:', error);
