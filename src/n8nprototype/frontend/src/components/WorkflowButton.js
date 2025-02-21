@@ -1,8 +1,7 @@
-import React, {useState} from 'react';
+import React from 'react';
 import './WorkflowButton.css'
 
 const WorkflowButton = ({workflow, selectWorkflow}) => {
-    const [selected] = useState(workflow.value.selected)
     if (!workflow || !workflow.value || !workflow.value.label) return null;
 
     const handleClick = () => {
@@ -17,7 +16,7 @@ const WorkflowButton = ({workflow, selectWorkflow}) => {
     };
 
     // Use a blue background for the highest workflow attention, otherwise a gray background
-    const style = selected
+    const style = workflow.value.selected
         ? {...baseStyle, backgroundColor: '#007bff'}
         : {...baseStyle, backgroundColor: '#6c757d'};
 

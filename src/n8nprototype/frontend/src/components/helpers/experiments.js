@@ -94,18 +94,18 @@ export const selectNewWorkflow = (workflows, id) => {
     }
 
     return workflows.map((workflow) => {
-            if (workflow?.value) {
-                return {
-                    ...workflow,
-                    value: {
-                        ...workflow.value,
-                        selected: workflow.id === id,
-                    },
-                };
-            }
-            return workflow;
+        if (workflow?.value) {
+            return {
+                ...workflow,
+                value: {
+                    ...workflow.value,
+                    selected: workflow.id === id,
+                },
+            };
         }
-    );
+        // Return a shallow copy even if there's no value object
+        return { ...workflow };
+    });
 };
 
 export const selectHighestWorkflow = (workflows) => {

@@ -56,8 +56,6 @@ function App() {
             const message_from_n8n = {role: 'system', content: data_as_markdown};
             addMessageToMessages(message_from_n8n);
 
-            console.log(webhookUrl)
-
         } catch (error) {
             console.error('Error sending message:', error);
             addMessageToMessages({role: 'system', content: 'Error: Could not send message.'});
@@ -70,10 +68,8 @@ function App() {
     };
 
     const selectWorkflow = (selectedWorkflow) => {
-        const newWorkflows = selectNewWorkflow(workflows, selectedWorkflow.id);
-        console.log(newWorkflows)
-        setWorkflows(newWorkflows)
-        console.log(workflows)
+        setWorkflows(selectNewWorkflow(workflows, selectedWorkflow.id));
+        setWebhookUrl(selectedWorkflow.value.url);
     }
 
     return (

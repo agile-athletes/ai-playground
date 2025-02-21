@@ -71,4 +71,4 @@ Ensure that each new workflow has a unique "id".
 
 Ensure that the response content is a valid json and only json.
 
-Do not make up anything if you do not know the answer. Use the Workflow-Selector (Fallback).
+Do not make up anything if you do not know the answer. Use the Workflow-Selector (Fallback) if no workflow fits.
