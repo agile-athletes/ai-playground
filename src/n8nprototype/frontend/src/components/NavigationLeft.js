@@ -1,7 +1,7 @@
 import './NavigationLeft.css';
 import WorkflowButton from './WorkflowButton';
 
-const NavigationLeft = ({workflows, setWebhookUrl}) => {
+const NavigationLeft = ({workflows, selectWorkflow}) => {
 
     return (
         <nav className="navigation-left">
@@ -10,7 +10,7 @@ const NavigationLeft = ({workflows, setWebhookUrl}) => {
                     <li key={workflow.id}>
                         <WorkflowButton
                             workflow={workflow}
-                            setWebhookUrl={setWebhookUrl}
+                            selectWorkflow={selectWorkflow}
                         />
                     </li>
                 ))}

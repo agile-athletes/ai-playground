@@ -1,15 +1,12 @@
 import React, {useState} from 'react';
 import './WorkflowButton.css'
 
-const WorkflowButton = ({workflow, setWebhookUrl}) => {
-    const [selected, setSelected] = useState(workflow.value.selected)
+const WorkflowButton = ({workflow, selectWorkflow}) => {
+    const [selected] = useState(workflow.value.selected)
     if (!workflow || !workflow.value || !workflow.value.label) return null;
 
     const handleClick = () => {
-        const selection = workflow.value.selected;
-        if ( selection ) { return; }  // can be selected but not deselected
-        setSelected(selection)
-        setWebhookUrl(workflow.value.url)
+        selectWorkflow(workflow);
     };
 
     const baseStyle = {

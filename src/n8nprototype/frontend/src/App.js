@@ -6,7 +6,7 @@ import NavigationLeft from './components/NavigationLeft';
 import {parseJsonStringWithOpenAiTics} from './components/helpers/json_helper'
 import {JsonToMarkdownConverter} from './components/helpers/json_to_markdown'
 import {
-    filterByName, selectHighestWorkflow,
+    filterByName, selectHighestWorkflow, selectNewWorkflow,
     workflowSelectionSample
 } from './components/helpers/experiments'
 import './App.css';
@@ -69,9 +69,16 @@ function App() {
         setMessages([]);
     };
 
+    const selectWorkflow = (selectedWorkflow) => {
+        const newWorkflows = selectNewWorkflow(workflows, selectedWorkflow.id);
+        console.log(newWorkflows)
+        setWorkflows(newWorkflows)
+        console.log(workflows)
+    }
+
     return (
         <div className="app-wrapper">
-            <NavigationLeft workflows={workflows} setWebhookUrl={setWebhookUrl}/>
+            <NavigationLeft workflows={workflows} selectWorkflow={selectWorkflow}/>
             <div className="main-content">
                 <ChatWindow messages={messages}/>
                 <InputArea onSend={sendMessage} onNewChat={clearChat}/>

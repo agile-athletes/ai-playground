@@ -78,7 +78,7 @@ export const filterByName = (json, name) => {
 }
 
 export const hasWorkflowSelectionParent = (fromAiServer) => {
-    return fromAiServer.workflows  && typeof fromAiServer.workflows === "object"
+    return fromAiServer.workflows && typeof fromAiServer.workflows === "object"
 }
 
 // Returns true if the given attention has the highest weight among all workflow attentions
@@ -88,12 +88,25 @@ const isHighestWorkflowAttention = (attention, workflows) => {
     return parseFloat(attention.weight) === maxWeight;
 };
 
-export const deSelectWorkflows = (workflows) => {
-    workflows.forEach((workflow) => {
-        workflow.value.selected = false;
-    });
-    return workflows;
-}
+export const selectNewWorkflow = (workflows, id) => {
+    if (!Array.isArray(workflows)) {
+        throw new Error("Expected workflows to be an array.");
+    }
+
+    return workflows.map((workflow) => {
+            if (workflow?.value) {
+                return {
+                    ...workflow,
+                    value: {
+                        ...workflow.value,
+                        selected: workflow.id === id,
+                    },
+                };
+            }
+            return workflow;
+        }
+    );
+};
 
 export const selectHighestWorkflow = (workflows) => {
     workflows.forEach((workflow) => {
@@ -103,4 +116,4 @@ export const selectHighestWorkflow = (workflows) => {
         }
     });
     return undefined;
-}
+};
