@@ -18,15 +18,18 @@ function App() {
     const [messages, setMessages] = useState([]);
     const [webhookUrl, setWebhookUrl] = useState(WEBHOOK_URL); // SelectWorkflowExperiment
     const [workflows, setWorkflows] = useState([]);
-    const [mock] = useState(true);
+    const [mock] = useState(false);
 
     function addMessageToMessages(newMessage) {
         setMessages((prevMessages) => [...prevMessages, newMessage]);
     }
 
     const sendMessage = async (userContent) => {
+        const toUpdateMessages = [...messages];
         const userMessage = {role: 'user', content: userContent};
-        addMessageToMessages(userMessage);
+        toUpdateMessages.push(userMessage);
+
+        console.log(JSON.stringify(toUpdateMessages))
 
         try {
             let data_as_json;
@@ -39,7 +42,7 @@ function App() {
                     {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify(messages),
+                        body: JSON.stringify(toUpdateMessages),
                     }
                 );
                 const data = await response.json();
@@ -52,10 +55,12 @@ function App() {
             setWorkflows(workflows);
 
             const attentions = filterByName(data_as_json, "attentions")
-            const data_as_markdown = new JsonToMarkdownConverter(attentions).toMarkdown();
-            const message_from_n8n = {role: 'system', content: data_as_markdown};
-            addMessageToMessages(message_from_n8n);
-
+            if ( Array.isArray(attentions) && attentions.length > 0) {
+                const data_as_markdown = new JsonToMarkdownConverter(attentions).toMarkdown();
+                const message_from_n8n = {role: 'system', content: data_as_markdown};
+                toUpdateMessages.push(message_from_n8n);
+            }
+            setMessages(toUpdateMessages);
         } catch (error) {
             console.error('Error sending message:', error);
             addMessageToMessages({role: 'system', content: 'Error: Could not send message.'});
