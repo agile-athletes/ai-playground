@@ -1,0 +1,126 @@
+{
+  "name": "SelectWorkflowExperiment",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "14308df3-8c48-43c9-a31c-26c76051b5e5",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "id": "16f9e065-a7f0-4e48-9b0d-08cd4b422be4",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        40,
+        280
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "Cc5LhcW6D019Grb0",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "62eb6dc8-452e-4b0f-a461-615c6eda1ebe",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "74dd1183-745b-4715-848c-d09c2f60f55e",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -220,
+        0
+      ],
+      "webhookId": "62eb6dc8-452e-4b0f-a461-615c6eda1ebe"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You assist a user in recognizing a selection of the workflow that he needs\n\nCHAT_HISTORY=\"{{ $json.body.filter(item => item.role === 'user').pop().content }}\".\n\nOften you will notice in the CHAT_HISTORY that the user already has the correct workflow in progress. In that case\nyou should an will not do anything but returning the request unchanged.\n\nYour task is to:\n\n1. **Check if the user is in the correct workflow** The user may be in no workflow or you notice that user is in the wrong workflow for his request. It is also possible that user notices the missing or wrong workflow himself and is directly requesting you for your assistance. \n2. **Respond without any change if the user is in the correct workflow** Do nothing \n3. **Respond with a workflow recommendation** Respond with an workflow that shows your recommendation from WORKFLOWS. \n\n<WORKFLOWS>\n\n# Collection of workflows\n\n## SOFT-Validator\n\nFrom the CHAT_HISTORY it is clear that user intends to work on validating and formulating an issue for his business by the policy of SOFT.\nAdd a workflow in the workflows array as json with a weighted rating to indicate relevance or accuracy as follows:\n\n```json\n    {\n      \"id\": 1,\n      \"parent_id\": null,\n      \"name\": \"SELECT-Workflow\",\n      \"value\": {\n        \"type\": \"workflow\",\n        \"label\": \"Request the correct workflow\",\n        \"url\": \"http://localhost:5678/webhook/7f718eed-4d7c-49eb-880c-45d93f5bdb04\",\n        \"selected\": false\n        },\n      \"weight\": \"1\"\n    }\n```\nNotes regarding SOFT-Validator: \n* \"url\", \"name\" and \"parent_id\" are fixed values. ‘id’ is an integer incremented by one. Set \"weight\" with your estimation from 0 to 1.\n\n## Workflow-Selector (Fallback)\n\nIf you did not find a workflow that fits to the needs of user, then simply append the following as its single element to the workflows array:\n```json\n    {\n      \"id\": 1,\n      \"parent_id\": null,\n      \"name\": \"SELECT-Workflow\",\n      \"value\": {\n        \"type\": \"workflow\",\n        \"label\": \"Request the correct workflow\",\n        \"url\": \"http://localhost:5678/webhook/98772d9f-9897-4030-935b-3e5efeed970a\",\n        \"selected\":false\n        },\n      \"weight\": \"1\"\n    }\n```\n\n</WORKFLOWS>\n\n# Response Format:\n\nYour response should adhere to the following JSON structure:\n\n```json\n{\n  \"workflows\": [\n    <append the json elements in this array>\n  ]\n}\n```\n\nEnsure that each new workflow has a unique \"id\".\n\nEnsure that the response content is a valid json and only json.\n\nDo not make up anything if you do not know the answer. Use the Workflow-Selector (Fallback) if no workflow fits.",
+        "hasOutputParser": true
+      },
+      "id": "536cee8d-8244-41cb-8a16-4a8ced417d69",
+      "name": "Basic LLM Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        40,
+        60
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ebca090a-059a-4a2e-b27f-7cd4306980e3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "68f9e66783549a11e344292a1ef8ccb1a9d2307f134c3a15405499ae2f6cb69a"
+  },
+  "id": "0KcOmBjoZ1mhiGXp",
+  "tags": [
+    {
+      "createdAt": "2025-02-14T08:40:25.904Z",
+      "updatedAt": "2025-02-14T08:40:25.904Z",
+      "id": "TV20jI4XkgLHPpxz",
+      "name": "Design"
+    }
+  ]
+}

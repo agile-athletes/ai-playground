@@ -64,7 +64,8 @@ Your response should adhere to the following JSON structure:
 ```json
 {
   "workflows": [
-    <append the json elements in this array>
+  ],
+  "messages": [
   ]
 }
 ```

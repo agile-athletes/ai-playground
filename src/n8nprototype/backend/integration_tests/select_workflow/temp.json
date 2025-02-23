@@ -1,0 +1,22 @@
+{
+  "name": "SelectWorkflowExperiment",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "62eb6dc8-452e-4b0f-a461-615c6eda1ebe",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "74dd1183-745b-4715-848c-d09c2f60f55e",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -220,
+        0
+      ],
+      "webhookId": "62eb6dc8-452e-4b0f-a461-615c6eda1ebe"
+    }
+  ]
+}
