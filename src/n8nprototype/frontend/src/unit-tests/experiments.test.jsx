@@ -1,6 +1,6 @@
 // selectNewWorkflow.test.js
 
-import { selectNewWorkflow } from './experiments';
+import { selectNewWorkflow } from '../components/helpers/experiments';
 
 describe("selectNewWorkflow", () => {
     it("should throw an error if workflows is not an array", () => {

@@ -1,6 +1,6 @@
 You assist a user in recognizing a selection of the workflow that he needs
 
-CHAT_HISTORY="{{ $json.body }}".
+CHAT_HISTORY="{{ $json.body.filter(item => item.role === 'user').pop().content }}".
 
 Often you will notice in the CHAT_HISTORY that the user already has the correct workflow in progress. In that case
 you should an will not do anything but returning the request unchanged.
@@ -27,8 +27,9 @@ Add a workflow in the workflows array as json with a weighted rating to indicate
       "name": "SOFT-Validator",
       "value": {
         "type": "workflow",
-        "label": "Upload Workflow Policy",
-        "url": "http://localhost:5678/webhook/98772d9f-9897-4030-935b-3e5efeed970a"
+        "label": "Validate in SOFT",
+        "url": "http://localhost:5678/webhook/7f718eed-4d7c-49eb-880c-45d93f5bdb04",
+        "selected": false
         },
       "weight": "<your estimation value 0.0-1.0>"
     }
@@ -47,7 +48,8 @@ If you did not find a workflow that fits to the needs of user, then simply appen
       "value": {
         "type": "workflow",
         "label": "Request the correct workflow",
-        "url": "http://localhost:5678/webhook/98772d9f-9897-4030-935b-3e5efeed970a"
+        "url": "http://localhost:5678/webhook/98772d9f-9897-4030-935b-3e5efeed970a",
+        "selected": false
         },
       "weight": "1"
     }
