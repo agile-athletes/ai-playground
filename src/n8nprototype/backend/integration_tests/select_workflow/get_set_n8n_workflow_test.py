@@ -22,7 +22,7 @@ class TestExtractJsonFromText(unittest.TestCase):
         self.assertEqual(id, workflow_id)
 
     def test_strip_workflow_for_put(self):
-        workflow = read_workflow_json("../../workflows/SelectWorkflowExperiment/SelectWorkflowExperiment_copy.json")
+        workflow = read_workflow_json("../../workflows/SelectWorkflowExperiment/GeneralMusterOfBasicLLMChain_copy.json")
         id = workflow["id"]
         stripped_workflow = strip_elements_for_put(workflow)
         update_workflow_by_id(id, stripped_workflow, LOCALHOST_N8N_API_KEY)

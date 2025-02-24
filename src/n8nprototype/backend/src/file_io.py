@@ -9,3 +9,6 @@ def write_workflow_json(filepath, workflow_json):
     with open(filepath, 'w', encoding='utf-8') as file:
         file.write(json.dumps(workflow_json, indent=2))
 
+def read_file(filepath):
+    f = open(filepath, "r")
+    return f.read()

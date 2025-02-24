@@ -1,14 +1,12 @@
-import { useState } from 'react';
+import {useState} from 'react';
 import {filterByName, selectHighestWorkflow, workflowSelectionSample} from "./helpers/experiments";
-import {parseJsonStringWithOpenAiTics} from "./helpers/json_helper";
 import {JsonToMarkdownConverter} from "./helpers/json_to_markdown";
 
-export const WEBHOOK_URL = 'http://localhost:5678/webhook/62eb6dc8-452e-4b0f-a461-615c6eda1ebe'; // Select prod
-// export const WEBHOOK_URL = 'http://localhost:5678/webhook-test/7f718eed-4d7c-49eb-880c-45d93f5bdb04'; // Validate prod
+export const WEBHOOK_URL = 'http://localhost:5678/webhook/bxKkwMfFdXNReTjV/webhook/27f68323-c314-4adf-a88f-aad037af08ee'; // Select prod
 
 export function useAppState() {
     const [messages, setMessages] = useState([]);
-    const [webhookUrl, setWebhookUrl] = useState(WEBHOOK_URL); // SelectWorkflowExperiment
+    const [webhookUrl, setWebhookUrl] = useState(WEBHOOK_URL); // GeneralMusterOfBasicLLMChain
     const [workflows, setWorkflows] = useState([]);
     const [mock] = useState(false);
 
@@ -37,8 +35,7 @@ export function useAppState() {
                         body: JSON.stringify(toUpdateMessages),
                     }
                 );
-                const data = await response.json();
-                data_as_json = parseJsonStringWithOpenAiTics(data.text);
+                data_as_json = await response.json();
             }
 
             const workflows = filterByName(data_as_json, "workflows");
