@@ -1,4 +1,3 @@
-import json
 import os
 import unittest
 from dotenv import load_dotenv
@@ -38,14 +37,27 @@ class TestExtractJsonFromText(unittest.TestCase):
         print(result)
 
 
-    def test_query_workflow(self):
-        path = "http://localhost:5678/webhook-test/bxKkwMfFdXNReTjV/webhook/27f68323-c314-4adf-a88f-aad037af08ee"
-        # path = "http://localhost:5678/webhook/bxKkwMfFdXNReTjV/webhook/27f68323-c314-4adf-a88f-aad037af08ee"
-        user_entry = [{"role": "user", "content": "I want to validate my problem formulated as a SOFT issue."}]
+    def test_select_workflow(self):
+        path = "http://localhost:5678/webhook/bxKkwMfFdXNReTjV/webhook/27f68323-c314-4adf-a88f-aad037af08ee"
+        user_entry = [{"role": "user", "content": "I want to validate my problem formulated as a SOFT issue."},
+                      {"role": "system", "content": "H1ConsiderationsEnsure that you clearly define the criteria for what constitutes a SOFT issue in your context."},
+                      {"role": "user", "content": "New artificial intelligence technology is challenging our core business of on-demand translation."}]
         result = query_prompt_on_n8n(user_entry, path)
         print("JELLE")
         print(type(result))
         print(result)
+        url = result["workflows"][0]["value"]["url"]
+        self.assertEqual("http://localhost:5678/webhook/lY7jAmzUeQgizzH6/webhook/27f68323-c314-4adf-a88f-aad037af08ee", url)
+
+    def test_query_workflow(self):
+        path = "http://localhost:5678/webhook/lY7jAmzUeQgizzH6/webhook/27f68323-c314-4adf-a88f-aad037af08ee"
+        user_entry = [{"role": "user", "content": "New artificial intelligence technology is challenging our core business of on-demand translation."}]
+        result = query_prompt_on_n8n(user_entry, path)
+        print("JELLE")
+        print(type(result))
+        print(result)
+        # url = result["workflows"][0]["value"]["url"]
+        # self.assertEqual("http://localhost:5678/webhook/bxKkwMfFdXNReTjV/webhook/27f68323-c314-4adf-a88f-aad037af08ee", url)
 
 
     def test_delete_workflow(self):
