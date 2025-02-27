@@ -21,8 +21,15 @@ export function useAppState() {
     }
 
     const appendWorkflowsToWorkflows = (newWorkflows) => {
-        setWorkflows((prevWorkflows) => [...prevWorkflows, ...newWorkflows]);
-    }
+        setWorkflows((prevWorkflows) => {
+            const currentCount = prevWorkflows.length;
+            const workflowsWithIds = newWorkflows.map((workflow, index) => ({
+                ...workflow,
+                id: currentCount + index,
+            }));
+            return [...prevWorkflows, ...workflowsWithIds];
+        });
+    };
 
     const handleSelectWorkflow = (selectedWorkflow) => {
         const index = workflows.findIndex(workflow => workflow.id === selectedWorkflow.id);

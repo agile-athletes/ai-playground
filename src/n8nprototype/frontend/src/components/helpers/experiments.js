@@ -79,13 +79,6 @@ export const hasWorkflowSelectionParent = (fromAiServer) => {
     return fromAiServer.workflows && typeof fromAiServer.workflows === "object"
 }
 
-// TODO remove Returns true if the given attention has the highest weight among all workflow attentions
-// const isHighestWorkflowAttention = (attention, workflows) => {
-//     if (workflows.length === 0) return false;
-//     const maxWeight = Math.max(...workflows.map((att) => parseFloat(att.weight)));
-//     return parseFloat(attention.weight) === maxWeight;
-// };
-
 export const selectNewWorkflow = (workflows, id) => {
     if (!Array.isArray(workflows)) {
         throw new Error("Expected workflows to be an array.");
