@@ -4,11 +4,20 @@ import {JsonToMarkdownConverter} from "./helpers/json_to_markdown";
 
 export const WEBHOOK_URL = 'http://localhost:5678/webhook/bxKkwMfFdXNReTjV/webhook/27f68323-c314-4adf-a88f-aad037af08ee'; // Select prod
 
+
 export function useAppState() {
     const [messages, setMessages] = useState([]);
     const [webhookUrl, setWebhookUrl] = useState(WEBHOOK_URL); // GeneralMusterOfBasicLLMChain
     const [workflows, setWorkflows] = useState([]);
-    const [mock] = useState(false);
+    const [mock] = useState(true);
+
+    const handleSelectWorkflow = (selectedWorkflow) => {
+        const index = workflows.findIndex(workflow => workflow.id === selectedWorkflow.id);
+        if (index !== -1) {
+            // Remove all workflows after the selected one (including itself keeps it)
+            setWorkflows(workflows.slice(0, index + 1));
+        }
+    };
 
     const addMessageToMessages = (newMessage) => {
         setMessages((prevMessages) => [...prevMessages, newMessage]);
@@ -59,5 +68,5 @@ export function useAppState() {
     };
 
 
-    return { messages, setMessages, webhookUrl, setWebhookUrl, workflows, setWorkflows, sendMessage };
+    return { messages, setMessages, webhookUrl, setWebhookUrl, workflows, handleSelectWorkflow, sendMessage };
 }

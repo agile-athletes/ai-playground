@@ -1,15 +1,14 @@
-// src/App.js
+
 import React from 'react';
 import ChatWindow from './components/ChatWindow';
 import InputArea from './components/InputArea';
 import NavigationLeft from './components/NavigationLeft';
-import {selectNewWorkflow} from './components/helpers/experiments'
 import './App.css';
 import {useAppState} from "./components/UseAppState";
 
 function App() {
 
-    const { messages, setMessages, sendMessage, setWebhookUrl, workflows, setWorkflows } = useAppState();
+    const { messages, setMessages, sendMessage, setWebhookUrl, workflows, handleSelectWorkflow } = useAppState();
 
     // Clear chat (flush messages)
     const clearChat = () => {
@@ -17,7 +16,8 @@ function App() {
     };
 
     const selectWorkflow = (selectedWorkflow) => {
-        setWorkflows(selectNewWorkflow(workflows, selectedWorkflow.id));
+        handleSelectWorkflow(selectedWorkflow)
+        // setWorkflows(selectNewWorkflow(workflows, selectedWorkflow.id));
         setWebhookUrl(selectedWorkflow.value.url);
     }
 

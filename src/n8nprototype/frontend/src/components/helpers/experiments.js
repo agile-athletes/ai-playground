@@ -29,7 +29,7 @@ export function workflowSelectionSample() {
                 "name": "Workflow foobar 1",
                 "value": {
                     "type": "workflow",
-                    "label": "Upload Workflow Policy",
+                    "label": "Select",
                     "selected": false,
                     "url": "http://localhost:5678/webhook/98772d9f-9897-4030-935b-3e5efeed970a"
                 },
@@ -41,14 +41,26 @@ export function workflowSelectionSample() {
                 "name": "Workflow foobar 2",
                 "value": {
                     "type": "workflow",
-                    "label": "App Settings",
+                    "label": "SOFT Validation",
+                    "selected": false,
+                    "url": "http://localhost:5678/webhook/98772d9f-9897-4030-935b-3e5efeed970b"
+                },
+                "weight": "0.7",
+                "parent_id": null
+            },
+            {
+                "id": 3,
+                "name": "Workflow foobar 3",
+                "value": {
+                    "type": "workflow",
+                    "label": "On Level deeper",
                     "selected": false,
                     "url": "http://localhost:5678/webhook/98772d9f-9897-4030-935b-3e5efeed970b"
                 },
                 "weight": "0.7",
                 "parent_id": null
             }
-        ]
+            ]
     };
 }
 

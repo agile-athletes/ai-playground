@@ -1,16 +1,16 @@
 import './NavigationLeft.css';
 import WorkflowButton from './WorkflowButton';
 
-const NavigationLeft = ({workflows, selectWorkflow}) => {
-
+const NavigationLeft = ({ workflows, selectWorkflow }) => {
     return (
         <nav className="navigation-left">
             <ul>
-                {workflows.map((workflow) => (
-                    <li key={workflow.id}>
+                {workflows.map((workflow, index) => (
+                    <li key={workflow.id} style={{ paddingLeft: `${index * 20}px` }}>
                         <WorkflowButton
                             workflow={workflow}
                             selectWorkflow={selectWorkflow}
+                            index={index}
                         />
                     </li>
                 ))}
