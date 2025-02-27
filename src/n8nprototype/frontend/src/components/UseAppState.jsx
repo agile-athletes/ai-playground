@@ -11,18 +11,18 @@ const WEBHOOK_URL = 'http://localhost:5678/webhook/bxKkwMfFdXNReTjV/webhook/27f6
 export function useAppState() {
     const [messages, setMessages] = useState([]);
     const [workflows, setWorkflows] = useState(workflowSelectionStart(WEBHOOK_URL));
-    const [mock] = useState(true);
+    const [mock] = useState(false);
 
     const getWebhookUrl = () => {
-        const index = workflows.length - 1
+        const index = workflows.length - 1;
         if (index >= 0) {
-            return workflows[index]
+            return workflows[index].value.url;
         }
     }
 
     const appendWorkflowsToWorkflows = (newWorkflows) => {
         setWorkflows((prevWorkflows) => {
-            const currentCount = prevWorkflows.length;
+            const currentCount = prevWorkflows.length + 1;
             const workflowsWithIds = newWorkflows.map((workflow, index) => ({
                 ...workflow,
                 id: currentCount + index,
@@ -48,12 +48,11 @@ export function useAppState() {
         const userMessage = {role: 'user', content: userContent};
         toUpdateMessages.push(userMessage);
 
-        console.log(JSON.stringify(toUpdateMessages))
-
         try {
             let data_as_json;
             if (mock) {
                 data_as_json = workflowSelectionSample();
+                console.log(getWebhookUrl())
             }
             else {
                 const response = await fetch(
@@ -67,9 +66,9 @@ export function useAppState() {
                 data_as_json = await response.json();
             }
 
-            const workflows = filterByName(data_as_json, "workflows");
-            if (Array.isArray(workflows) && workflows.length > 0) {
-                appendWorkflowsToWorkflows(workflows);
+            const workflowsToAppend = filterByName(data_as_json, "workflows");
+            if (Array.isArray(workflowsToAppend) && workflowsToAppend.length > 0) {
+                appendWorkflowsToWorkflows(workflowsToAppend);
             }
 
             const attentions = filterByName(data_as_json, "attentions")

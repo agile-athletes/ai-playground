@@ -26,7 +26,7 @@ export function workflowSelectionSample() {
         "workflows": [
             {
                 "id": 2,
-                "name": "Workflow foobar 2",
+                "name": "Workflow 2",
                 "value": {
                     "type": "workflow",
                     "label": "SOFT Validation",
@@ -38,7 +38,7 @@ export function workflowSelectionSample() {
             },
             {
                 "id": 3,
-                "name": "Workflow foobar 3",
+                "name": "Workflow 3",
                 "value": {
                     "type": "workflow",
                     "label": "On Level deeper",
