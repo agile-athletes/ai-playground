@@ -25,18 +25,6 @@ export function workflowSelectionSample() {
         ],
         "workflows": [
             {
-                "id": 1,
-                "name": "Workflow foobar 1",
-                "value": {
-                    "type": "workflow",
-                    "label": "Select",
-                    "selected": false,
-                    "url": "http://localhost:5678/webhook/98772d9f-9897-4030-935b-3e5efeed970a"
-                },
-                "weight": "0.1",
-                "parent_id": null
-            },
-            {
                 "id": 2,
                 "name": "Workflow foobar 2",
                 "value": {
@@ -60,27 +48,25 @@ export function workflowSelectionSample() {
                 "weight": "0.7",
                 "parent_id": null
             }
-            ]
+        ]
     };
 }
 
-export function workflowSelectionStart() {
-    return {
-        "workflows": [
-            {
-                "id": 1,
-                "name": "Workflow foobar 1",
-                "value": {
-                    "type": "workflow",
-                    "label": "Upload Workflow Policy",
-                    "selected": true,
-                    "url": "http://localhost:5678/webhook/98772d9f-9897-4030-935b-3e5efeed970a"
-                },
-                "weight": "0.7",
-                "parent_id": null
-            }
-        ]
-    }
+export function workflowSelectionStart(url) {
+    return [
+        {
+            "id": 1,
+            "name": "Root workflow",
+            "value": {
+                "type": "workflow",
+                "label": "Select",
+                "selected": true,
+                "url": url
+            },
+            "weight": "1",
+            "parent_id": null
+        }
+    ]
 }
 
 // call with name = "attentions" or "workflows
@@ -93,12 +79,12 @@ export const hasWorkflowSelectionParent = (fromAiServer) => {
     return fromAiServer.workflows && typeof fromAiServer.workflows === "object"
 }
 
-// Returns true if the given attention has the highest weight among all workflow attentions
-const isHighestWorkflowAttention = (attention, workflows) => {
-    if (workflows.length === 0) return false;
-    const maxWeight = Math.max(...workflows.map((att) => parseFloat(att.weight)));
-    return parseFloat(attention.weight) === maxWeight;
-};
+// TODO remove Returns true if the given attention has the highest weight among all workflow attentions
+// const isHighestWorkflowAttention = (attention, workflows) => {
+//     if (workflows.length === 0) return false;
+//     const maxWeight = Math.max(...workflows.map((att) => parseFloat(att.weight)));
+//     return parseFloat(attention.weight) === maxWeight;
+// };
 
 export const selectNewWorkflow = (workflows, id) => {
     if (!Array.isArray(workflows)) {
@@ -116,16 +102,16 @@ export const selectNewWorkflow = (workflows, id) => {
             };
         }
         // Return a shallow copy even if there's no value object
-        return { ...workflow };
+        return {...workflow};
     });
 };
 
-export const selectHighestWorkflow = (workflows) => {
-    workflows.forEach((workflow) => {
-        if (workflow.value.selected !== undefined) {
-            workflow.value.selected = isHighestWorkflowAttention(workflow, workflows)
-            return workflow;
-        }
-    });
-    return undefined;
-};
+// export const selectHighestWorkflow = (workflows) => {
+//     workflows.forEach((workflow) => {
+//         if (workflow.value.selected !== undefined) {
+//             workflow.value.selected = isHighestWorkflowAttention(workflow, workflows)
+//             return workflow;
+//         }
+//     });
+//     return undefined;
+// };

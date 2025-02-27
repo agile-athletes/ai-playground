@@ -8,7 +8,7 @@ import {useAppState} from "./components/UseAppState";
 
 function App() {
 
-    const { messages, setMessages, sendMessage, setWebhookUrl, workflows, handleSelectWorkflow } = useAppState();
+    const { messages, setMessages, sendMessage, workflows, handleSelectWorkflow } = useAppState();
 
     // Clear chat (flush messages)
     const clearChat = () => {
@@ -17,8 +17,6 @@ function App() {
 
     const selectWorkflow = (selectedWorkflow) => {
         handleSelectWorkflow(selectedWorkflow)
-        // setWorkflows(selectNewWorkflow(workflows, selectedWorkflow.id));
-        setWebhookUrl(selectedWorkflow.value.url);
     }
 
     return (
