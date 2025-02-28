@@ -1,0 +1,61 @@
+/* Container styling for both forms */
+.form-container {
+    max-width: 400px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Header styling */
+.form-container h2 {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+/* Input field styling */
+.form-container input[type="email"],
+.form-container input[type="text"] {
+    width: 90%;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+/* Button styling */
+.form-container button {
+    width: 95%;
+    padding: 0.8rem;
+    background-color: #5a67d8;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+/* Button hover state */
+.form-container button:hover {
+    background-color: #434190;
+}
+
+/* Error message styling */
+.form-container p {
+    color: red;
+    font-size: 0.9rem;
+}
+
+/* Fancy subtle background gradient for the body */
+body {
+    background: linear-gradient(135deg, #f6f9fc, #e9eff5);
+    margin: 0;
+    padding: 0;
+}
