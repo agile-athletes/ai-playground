@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import "./Forms.css"
 
-export function EmailForm({ onSuccess }) {
+export function EmailForm({ onSuccess, onRestart }) {
     const [email, setEmail] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -12,16 +12,20 @@ export function EmailForm({ onSuccess }) {
         setLoading(true);
 
         try {
-            const response = await fetch('/auth/request-token', {
+            const response = await fetch('http://localhost:5678/webhook-test/request-token', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email }),
             });
+            if (response.status === 440) {
+                // If backend signals token-related issue, restart the flow.
+                onRestart();
+                return;
+            }
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Failed to request token');
             }
-            // If successful, call onSuccess passing the email (to be reused during token verification)
             onSuccess(email);
         } catch (err) {
             setError(err.message);
@@ -42,7 +46,7 @@ export function EmailForm({ onSuccess }) {
                 required
             />
             <button type="submit" disabled={loading}>
-                {loading ? 'Sending...' : 'Send Access Token'}
+                {loading ? 'Sending...' : 'Send Token'}
             </button>
             {error && <p style={{ color: 'red' }}>{error}</p>}
             You will receive an email giving you access for a session that will remain open until you close your browser.

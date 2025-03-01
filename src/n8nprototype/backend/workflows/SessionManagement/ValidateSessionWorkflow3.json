@@ -1,0 +1,124 @@
+{
+  "name": "Validate Session Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "validate-session"
+      },
+      "name": "Webhook Validate Session",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "validate-session-1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM auth_tokens WHERE session_id = '{{$json.session_id}}' AND session_expiry > datetime('now');"
+      },
+      "name": "Query Session (SQLite)",
+      "type": "n8n-nodes-base.sqlite",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ],
+      "credentials": {
+        "sqlite": "Your SQLite Credential"
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "if (!Array.isArray($json) || $json.length === 0) {\n  throw new Error('Invalid or expired session');\n}\n\nreturn [{ valid: true }];"
+      },
+      "name": "Check Session",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "responseBody": "Session valid",
+        "responseCode": 200
+      },
+      "name": "HTTP Response Success",
+      "type": "n8n-nodes-base.respond",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "responseBody": "Invalid or expired session",
+        "responseCode": 440
+      },
+      "name": "HTTP Response Error",
+      "type": "n8n-nodes-base.respond",
+      "typeVersion": 1,
+      "position": [
+        850,
+        500
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Validate Session": {
+      "main": [
+        [
+          {
+            "node": "Query Session (SQLite)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Session (SQLite)": {
+      "main": [
+        [
+          {
+            "node": "Check Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Session": {
+      "main": [
+        [
+          {
+            "node": "HTTP Response Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "errorWorkflow": {
+      "connections": {
+        "main": [
+          [
+            {
+              "node": "HTTP Response Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  }
+}

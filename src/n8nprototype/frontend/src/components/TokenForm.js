@@ -1,7 +1,7 @@
 import {useState} from "react";
 import "./Forms.css"
 
-export function TokenForm({ email, onVerified }) {
+export function TokenForm({ email, onVerified, onRestart }) {
     const [token, setToken] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -12,12 +12,17 @@ export function TokenForm({ email, onVerified }) {
         setLoading(true);
 
         try {
-            const response = await fetch('/auth/verify-token', {
+            const response = await fetch('', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, token }),
                 credentials: 'include' // include cookies in the request
             });
+            if (response.status === 440) {
+                // HTTP 440 indicates the temporary token is invalid/expired
+                onRestart();
+                return;
+            }
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Token verification failed');

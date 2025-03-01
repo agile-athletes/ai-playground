@@ -33,10 +33,15 @@ function App() {
         // Redirect to the main app, load user data, etc.
     };
 
+    const restartTokenFlow = () => {
+        setStep('email');
+        setUserEmail('');
+    };
+
     return (
         <div>
-            {step === 'email' && <EmailForm onSuccess={handleEmailSuccess} />}
-            {step === 'token' && <TokenForm email={userEmail} onVerified={handleTokenVerified} />}
+            {step === 'email' && <EmailForm onSuccess={handleEmailSuccess} onRestart={restartTokenFlow} />}
+            {step === 'token' && <TokenForm email={userEmail} onVerified={handleTokenVerified} onRestart={restartTokenFlow} />}
             {step === 'authenticated' && (
             <div className="app-wrapper">
                 <NavigationLeft workflows={workflows} selectWorkflow={selectWorkflow}/>

@@ -1,0 +1,151 @@
+{
+  "name": "Authenticate Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "authenticate"
+      },
+      "name": "Webhook Authenticate",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "authenticate-1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM auth_tokens WHERE email = '{{$json.email}}' AND token = '{{$json.token}}' AND token_expiry > datetime('now');"
+      },
+      "name": "Query Token (SQLite)",
+      "type": "n8n-nodes-base.sqlite",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ],
+      "credentials": {
+        "sqlite": "Your SQLite Credential"
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "if (!Array.isArray($json) || $json.length === 0) {\n  // If no record found, throw error to be caught later\n  throw new Error('Invalid or expired token');\n}\n\n// Generate a session ID – here using random hex string\nconst session_id = require('crypto').randomBytes(16).toString('hex');\n// Set expiry to 7 days from now\nconst session_expiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();\n\n// Pass on email, session_id and expiry for storage and response\nreturn [{\n  email: $json[0].email,\n  session_id,\n  session_expiry\n}];"
+      },
+      "name": "Generate Session",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE auth_tokens SET session_id = '{{$json.session_id}}', session_expiry = '{{$json.session_expiry}}' WHERE email = '{{$json.email}}';"
+      },
+      "name": "Store Session (SQLite)",
+      "type": "n8n-nodes-base.sqlite",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ],
+      "credentials": {
+        "sqlite": "Your SQLite Credential"
+      }
+    },
+    {
+      "parameters": {
+        "responseBody": "Session created: {{$json.session_id}}",
+        "responseCode": 200
+      },
+      "name": "HTTP Response Success",
+      "type": "n8n-nodes-base.respond",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "responseBody": "Invalid or expired token",
+        "responseCode": 440
+      },
+      "name": "HTTP Response Error",
+      "type": "n8n-nodes-base.respond",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        500
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Authenticate": {
+      "main": [
+        [
+          {
+            "node": "Query Token (SQLite)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Token (SQLite)": {
+      "main": [
+        [
+          {
+            "node": "Generate Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Session": {
+      "main": [
+        [
+          {
+            "node": "Store Session (SQLite)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Session (SQLite)": {
+      "main": [
+        [
+          {
+            "node": "HTTP Response Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "errorWorkflow": {
+      "connections": {
+        "main": [
+          [
+            {
+              "node": "HTTP Response Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  }
+}

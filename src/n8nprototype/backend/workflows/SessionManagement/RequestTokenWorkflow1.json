@@ -1,0 +1,124 @@
+{
+  "name": "Request Token Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "request-token"
+      },
+      "name": "Webhook Request Token",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "request-token-1"
+    },
+    {
+      "parameters": {
+        "functionCode": "const crypto = require('crypto');\n\n// Generate a five-digit token\nconst token = Math.floor(10000 + Math.random() * 90000).toString();\n// Calculate expiry: now + 1 day (ISO string)\nconst expiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();\n\n// Expecting input JSON to contain an 'email' field\nreturn [{\n  email: $json.email,\n  token,\n  expiry\n}];"
+      },
+      "name": "Generate Token",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT OR REPLACE INTO auth_tokens (email, token, token_expiry) VALUES ('{{$json.email}}', '{{$json.token}}', '{{$json.expiry}}');"
+      },
+      "name": "Store Token (SQLite)",
+      "type": "n8n-nodes-base.sqlite",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ],
+      "credentials": {
+        "sqlite": "Your SQLite Credential"
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "no-reply@yourdomain.com",
+        "toEmail": "={{$json.email}}",
+        "subject": "Your Login Token",
+        "text": "Your login token is: {{$json.token}}. It expires in 24 hours."
+      },
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [
+        850,
+        300
+      ],
+      "credentials": {
+        "smtp": "Your SMTP Credential"
+      }
+    },
+    {
+      "parameters": {
+        "responseBody": "Token sent to email",
+        "responseCode": 200
+      },
+      "name": "HTTP Response",
+      "type": "n8n-nodes-base.respond",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Request Token": {
+      "main": [
+        [
+          {
+            "node": "Generate Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Token": {
+      "main": [
+        [
+          {
+            "node": "Store Token (SQLite)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Token (SQLite)": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "main": [
+        [
+          {
+            "node": "HTTP Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
