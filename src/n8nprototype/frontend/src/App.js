@@ -1,5 +1,5 @@
 
-import React, {useState} from 'react';
+import React from 'react';
 import ChatWindow from './components/ChatWindow';
 import InputArea from './components/InputArea';
 import NavigationLeft from './components/NavigationLeft';
@@ -9,10 +9,17 @@ import {EmailForm} from "./components/EmailForm";
 import {TokenForm} from "./components/TokenForm";
 
 function App() {
-    const [step, setStep] = useState('email'); // 'email', 'token', 'authenticated'
-    const [userEmail, setUserEmail] = useState('');
 
-    const { messages, setMessages, sendMessage, workflows, handleSelectWorkflow } = useAppState();
+    const { messages,
+        setMessages,
+        sendMessage,
+        workflows,
+        handleSelectWorkflow,
+        step,
+        setStep,
+        userEmail,
+        setUserEmail,
+        restartTokenFlow } = useAppState();
 
     // Clear chat (flush messages)
     const clearChat = () => {
@@ -31,11 +38,6 @@ function App() {
     const handleTokenVerified = () => {
         setStep('authenticated');
         // Redirect to the main app, load user data, etc.
-    };
-
-    const restartTokenFlow = () => {
-        setStep('email');
-        setUserEmail('');
     };
 
     return (

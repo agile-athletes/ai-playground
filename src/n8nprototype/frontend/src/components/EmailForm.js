@@ -12,7 +12,7 @@ export function EmailForm({ onSuccess, onRestart }) {
         setLoading(true);
 
         try {
-            const response = await fetch('http://localhost:5678/webhook-test/request-token', {
+            const response = await fetch('http://localhost:5678/webhook/request-token', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email }),

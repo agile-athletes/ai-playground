@@ -20,7 +20,7 @@ export function TokenForm({ email, onVerified, onRestart }) {
         setLoading(true);
 
         try {
-            const response = await fetch('http://localhost:5678/webhook-test/authenticate', {
+            const response = await fetch('http://localhost:5678/webhook/authenticate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, token })

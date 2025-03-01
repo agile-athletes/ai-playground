@@ -12,6 +12,9 @@ export function useAppState() {
     const [messages, setMessages] = useState([]);
     const [workflows, setWorkflows] = useState(workflowSelectionStart(WEBHOOK_URL));
     const [mock] = useState(false);
+    const [step, setStep] = useState('email'); // 'email', 'token', 'authenticated'
+    const [userEmail, setUserEmail] = useState('');
+
 
     const getWebhookUrl = () => {
         const index = workflows.length - 1;
@@ -43,6 +46,11 @@ export function useAppState() {
         setMessages((prevMessages) => [...prevMessages, newMessage]);
     }
 
+    const restartTokenFlow = () => {
+        setStep('email');
+        setUserEmail('');
+    };
+
     const sendMessage = async (userContent) => {
         const toUpdateMessages = [...messages];
         const userMessage = {role: 'user', content: userContent};
@@ -64,6 +72,11 @@ export function useAppState() {
                     }
                 );
                 data_as_json = await response.json();
+                if (response.status === 440) {
+                    // If backend signals token-related issue, restart the flow.
+                    restartTokenFlow();
+                    return;
+                }
             }
 
             const workflowsToAppend = filterByName(data_as_json, "workflows");
@@ -88,5 +101,5 @@ export function useAppState() {
     };
 
 
-    return { messages, setMessages, workflows, handleSelectWorkflow, sendMessage };
+    return { messages, setMessages, workflows, handleSelectWorkflow, sendMessage, step, setStep, userEmail, setUserEmail, restartTokenFlow };
 }
