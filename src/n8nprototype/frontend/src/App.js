@@ -19,6 +19,7 @@ function App() {
         setStep,
         userEmail,
         setUserEmail,
+        setJwtToken,
         restartTokenFlow } = useAppState();
 
     // Clear chat (flush messages)
@@ -35,9 +36,9 @@ function App() {
         setStep('token');
     };
 
-    const handleTokenVerified = () => {
+    const handleTokenVerified = (response) => {
         setStep('authenticated');
-        // Redirect to the main app, load user data, etc.
+        setJwtToken(response[0].token);
     };
 
     return (

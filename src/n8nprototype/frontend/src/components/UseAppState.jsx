@@ -12,8 +12,9 @@ export function useAppState() {
     const [messages, setMessages] = useState([]);
     const [workflows, setWorkflows] = useState(workflowSelectionStart(WEBHOOK_URL));
     const [mock] = useState(false);
-    const [step, setStep] = useState('email'); // 'email', 'token', 'authenticated'
+    const [step, setStep] = useState('token'); // 'email', 'token', 'authenticated'
     const [userEmail, setUserEmail] = useState('');
+    const [jwtToken, setJwtToken] = useState([{"token":""}])
 
 
     const getWebhookUrl = () => {
@@ -51,6 +52,10 @@ export function useAppState() {
         setUserEmail('');
     };
 
+    const makeJwtToken = () => {
+        return `Bearer ${jwtToken}`;
+    }
+
     const sendMessage = async (userContent) => {
         const toUpdateMessages = [...messages];
         const userMessage = {role: 'user', content: userContent};
@@ -67,7 +72,7 @@ export function useAppState() {
                     getWebhookUrl(),
                     {
                         method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
+                        headers: {'Content-Type': 'application/json', 'Authorization': makeJwtToken() },
                         body: JSON.stringify(toUpdateMessages),
                     }
                 );
@@ -101,5 +106,13 @@ export function useAppState() {
     };
 
 
-    return { messages, setMessages, workflows, handleSelectWorkflow, sendMessage, step, setStep, userEmail, setUserEmail, restartTokenFlow };
+    return { messages,
+        setMessages,
+        workflows,
+        handleSelectWorkflow,
+        sendMessage,
+        step, setStep,
+        userEmail, setUserEmail,
+        setJwtToken,
+        restartTokenFlow };
 }
