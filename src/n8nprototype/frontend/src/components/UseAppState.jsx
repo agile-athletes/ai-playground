@@ -12,7 +12,7 @@ export function useAppState() {
     const [messages, setMessages] = useState([]);
     const [workflows, setWorkflows] = useState(workflowSelectionStart(WEBHOOK_URL));
     const [mock] = useState(false);
-    const [step, setStep] = useState('token'); // 'email', 'token', 'authenticated'
+    const [step, setStep] = useState('email'); // 'email', 'token', 'authenticated'
     const [userEmail, setUserEmail] = useState('');
     const [jwtToken, setJwtToken] = useState([{"token":""}])
 
