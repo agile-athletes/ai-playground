@@ -15,6 +15,7 @@ export function useAppState() {
     const [step, setStep] = useState('email'); // 'email', 'token', 'authenticated'
     const [userEmail, setUserEmail] = useState('');
     const [jwtToken, setJwtToken] = useState([{"token":""}])
+    const [loading, setLoading] = useState(false);
 
 
     const getWebhookUrl = () => {
@@ -58,27 +59,37 @@ export function useAppState() {
 
     const sendMessage = async (userContent) => {
         const toUpdateMessages = [...messages];
-        const userMessage = {role: 'user', content: userContent};
+        const userMessage = { role: 'user', content: userContent };
         toUpdateMessages.push(userMessage);
+        setLoading(true);
+
+        // Create a timeout promise that rejects after 10 seconds
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Request timed out")), 60000)
+        );
 
         try {
             let data_as_json;
             if (mock) {
                 data_as_json = workflowSelectionSample();
-                console.log(getWebhookUrl())
-            }
-            else {
-                const response = await fetch(
-                    getWebhookUrl(),
-                    {
+                console.log(getWebhookUrl());
+            } else {
+                // Use Promise.race to combine fetch with the timeout
+                const response = await Promise.race([
+                    fetch(getWebhookUrl(), {
                         method: 'POST',
-                        headers: {'Content-Type': 'application/json', 'Authorization': makeJwtToken() },
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': makeJwtToken(),
+                        },
                         body: JSON.stringify(toUpdateMessages),
-                    }
-                );
+                    }),
+                    timeoutPromise,
+                ]);
+
                 data_as_json = await response.json();
                 if (response.status === 440) {
-                    // If backend signals token-related issue, restart the flow.
+                    // If backend signals a token-related issue, restart the flow.
                     restartTokenFlow();
                     return;
                 }
@@ -89,10 +100,10 @@ export function useAppState() {
                 appendWorkflowsToWorkflows(workflowsToAppend);
             }
 
-            const attentions = filterByName(data_as_json, "attentions")
-            if ( Array.isArray(attentions) && attentions.length > 0) {
+            const attentions = filterByName(data_as_json, "attentions");
+            if (Array.isArray(attentions) && attentions.length > 0) {
                 const data_as_markdown = new JsonToMarkdownConverter(attentions).toMarkdown();
-                const message_from_n8n = {role: 'system', content: data_as_markdown};
+                const message_from_n8n = { role: 'system', content: data_as_markdown };
                 toUpdateMessages.push(message_from_n8n);
                 setMessages(toUpdateMessages);
             }
@@ -100,8 +111,15 @@ export function useAppState() {
             return data_as_json;
         } catch (error) {
             console.error('Error sending message:', error);
-            addMessageToMessages({role: 'system', content: 'Error: Could not send message.'});
-            throw error;
+            // Update the UI with an error message instead of throwing the error
+            addMessageToMessages({
+                role: 'system',
+                content:
+                    'Error: Could not send message. Please check your connection or try again later.',
+            });
+            // Optionally, you could also set an error state here to show a dedicated error UI
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -114,5 +132,6 @@ export function useAppState() {
         step, setStep,
         userEmail, setUserEmail,
         setJwtToken,
+        loading,
         restartTokenFlow };
 }

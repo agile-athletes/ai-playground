@@ -7,6 +7,7 @@ import './App.css';
 import {useAppState} from "./components/UseAppState";
 import {EmailForm} from "./components/EmailForm";
 import {TokenForm} from "./components/TokenForm";
+import SplashScreen from "./components/SplashScreen";
 
 function App() {
 
@@ -20,6 +21,7 @@ function App() {
         userEmail,
         setUserEmail,
         setJwtToken,
+        loading,
         restartTokenFlow } = useAppState();
 
     // Clear chat (flush messages)
@@ -49,6 +51,7 @@ function App() {
             <div className="app-wrapper">
                 <NavigationLeft workflows={workflows} selectWorkflow={selectWorkflow}/>
                 <div className="main-content">
+                    {loading && <SplashScreen />}
                     <ChatWindow messages={messages}/>
                     <InputArea onSend={sendMessage} onNewChat={clearChat}/>
                 </div>
