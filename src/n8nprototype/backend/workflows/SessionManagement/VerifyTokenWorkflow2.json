@@ -1,130 +1,111 @@
 {
-  "name": "Authenticate Workflow",
+  "name": "VerifyTokenWorkflow2",
   "nodes": [
     {
       "parameters": {
+        "jsCode": "// Generate a session ID – here using random hex string\nfunction getRandomHex(size) {\n  let result = '';\n  const hexChars = '0123456789abcdef';\n  for (let i = 0; i < size * 2; i++) {\n    result += hexChars[Math.floor(Math.random() * 16)];\n  }\n  return result;\n}\n\nconst session_id = getRandomHex(16);\n\n// Set expiry to 7 days from now\nconst session_expiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();\n\n// Pass on email, session_id and expiry for storage and response\n// return [{\n//   email: \"Jelle\",\n//   session_id,\n//   session_expiry\n// }];\n\nreturn {\n  \"iat\": 1741081529,\n  \"user_id\": \"jelleVanWieringen@agile-athletes.de\",\n  \"role\": \"user\"  \n}"
+      },
+      "id": "f79277dd-efe0-4653-9208-f4eeae502a58",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "845d4192-265a-4edb-957f-d7c3753f0110",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        980,
+        440
+      ]
+    },
+    {
+      "parameters": {
         "httpMethod": "POST",
-        "path": "authenticate"
+        "path": "authenticate",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "http://localhost:3000",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Credentials",
+                "value": "true"
+              }
+            ]
+          }
+        }
       },
       "name": "Webhook Authenticate",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        250,
-        300
+        180,
+        260
       ],
-      "webhookId": "authenticate-1"
+      "webhookId": "authenticate-1",
+      "id": "985d0c1f-6403-4dec-83f4-5e66e9d48fdc"
     },
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT * FROM auth_tokens WHERE email = '{{$json.email}}' AND token = '{{$json.token}}' AND token_expiry > datetime('now');"
+        "useJson": true,
+        "claimsJson": "={ \"user_id\": \"{{ $json.user_id }}\", \"iat\": {{ $json.iat }}, \"exp\": {{ $json.iat+86400 }} }",
+        "options": {}
       },
-      "name": "Query Token (SQLite)",
-      "type": "n8n-nodes-base.sqlite",
+      "id": "fa7ef89a-9655-4267-9624-8973b7e9dd8a",
+      "name": "JWT",
+      "type": "n8n-nodes-base.jwt",
       "typeVersion": 1,
       "position": [
-        450,
-        300
-      ],
-      "credentials": {
-        "sqlite": "Your SQLite Credential"
-      }
-    },
-    {
-      "parameters": {
-        "functionCode": "if (!Array.isArray($json) || $json.length === 0) {\n  // If no record found, throw error to be caught later\n  throw new Error('Invalid or expired token');\n}\n\n// Generate a session ID – here using random hex string\nconst session_id = require('crypto').randomBytes(16).toString('hex');\n// Set expiry to 7 days from now\nconst session_expiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();\n\n// Pass on email, session_id and expiry for storage and response\nreturn [{\n  email: $json[0].email,\n  session_id,\n  session_expiry\n}];"
-      },
-      "name": "Generate Session",
-      "type": "n8n-nodes-base.function",
-      "typeVersion": 1,
-      "position": [
-        650,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "UPDATE auth_tokens SET session_id = '{{$json.session_id}}', session_expiry = '{{$json.session_expiry}}' WHERE email = '{{$json.email}}';"
-      },
-      "name": "Store Session (SQLite)",
-      "type": "n8n-nodes-base.sqlite",
-      "typeVersion": 1,
-      "position": [
-        850,
-        300
+        700,
+        400
       ],
       "credentials": {
-        "sqlite": "Your SQLite Credential"
+        "jwtAuth": {
+          "id": "ZYIHn8MQ7KdNYP7e",
+          "name": "JWT Auth account"
+        }
       }
-    },
-    {
-      "parameters": {
-        "responseBody": "Session created: {{$json.session_id}}",
-        "responseCode": 200
-      },
-      "name": "HTTP Response Success",
-      "type": "n8n-nodes-base.respond",
-      "typeVersion": 1,
-      "position": [
-        1050,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "responseBody": "Invalid or expired token",
-        "responseCode": 440
-      },
-      "name": "HTTP Response Error",
-      "type": "n8n-nodes-base.respond",
-      "typeVersion": 1,
-      "position": [
-        1050,
-        500
-      ]
     }
   ],
+  "pinData": {},
   "connections": {
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "JWT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Webhook Authenticate": {
       "main": [
         [
           {
-            "node": "Query Token (SQLite)",
+            "node": "Code",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Query Token (SQLite)": {
+    "JWT": {
       "main": [
         [
           {
-            "node": "Generate Session",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Generate Session": {
-      "main": [
-        [
-          {
-            "node": "Store Session (SQLite)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Store Session (SQLite)": {
-      "main": [
-        [
-          {
-            "node": "HTTP Response Success",
+            "node": "Respond to Webhook",
             "type": "main",
             "index": 0
           }
@@ -132,20 +113,22 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
-    "errorWorkflow": {
-      "connections": {
-        "main": [
-          [
-            {
-              "node": "HTTP Response Error",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      }
+    "executionOrder": "v1"
+  },
+  "versionId": "838b5831-1fbd-48dc-8f8a-242a07a104e6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "68f9e66783549a11e344292a1ef8ccb1a9d2307f134c3a15405499ae2f6cb69a"
+  },
+  "id": "pAnR7rcSsvTO4x6W",
+  "tags": [
+    {
+      "createdAt": "2025-03-02T10:41:46.812Z",
+      "updatedAt": "2025-03-02T10:41:46.812Z",
+      "id": "aSsjTAKeiCPuHE4R",
+      "name": "Validation"
     }
-  }
+  ]
 }

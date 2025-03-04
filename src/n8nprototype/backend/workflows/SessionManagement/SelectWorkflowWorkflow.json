@@ -1,0 +1,257 @@
+{
+  "name": "SelectWorkflowWorkflow",
+  "nodes": [
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -120,
+        -80
+      ],
+      "id": "a6e6a4d2-0bd2-4e8e-86eb-d2a66498cc34",
+      "credentials": {
+        "openAiApi": {
+          "id": "Cc5LhcW6D019Grb0",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        620,
+        -100
+      ],
+      "id": "061faf36-6b99-47a5-8d43-3b81a0c0dd5d"
+    },
+    {
+      "parameters": {
+        "jsCode": "input = $input.first().json.text;\noutput = input.replace(/^```json\\s*/, '').replace(/\\s*```$/, '');\nreturn JSON.parse(output);"
+      },
+      "id": "54c7afbf-9ad9-477f-8197-a5b77548891e",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        340,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You assist a user in recognizing a selection of the workflow that he needs\n\nUSER_QUESTION=\"{{ $json.body.filter(item => item.role === 'user').pop().content }}\".\n\nYour task is to:\n\n1. **Respond with a workflow recommendation** Respond with an workflow that shows your recommendation from WORKFLOWS.\n\n<WORKFLOWS>\n\n# Collection of workflows\n\n## SOFT-Validator\n\nFrom the USER_QUESTION it is clear that user intends to work on validating and formulating an issue for his business by\nthe policy of SOFT.\nAdd two elements: one in the workflows array as json with a weighted rating to indicate relevance or accuracy as\nfollows:\n\n```json\n{\n  \"id\": 1,\n  \"parent_id\": null,\n  \"name\": \"VALIDATE-Workflow\",\n  \"value\": {\n    \"type\": \"workflow\",\n    \"label\": \"SOFT validation workflow\",\n    \"url\": \"http://localhost:5678/webhook/lY7jAmzUeQgizzH6/webhook/27f68323-c314-4adf-a88f-aad037af08ee\",\n    \"selected\": false\n  },\n  \"weight\": \"<your estimation value 0.0-1.0>\"\n}\n```\n\nAlso add an element in the attentions array in the following format:\n\n```json\n{\n  \"id\": 1,\n  \"parent_id\": null,\n  \"name\": \"Considerations\",\n  \"value\": <your answer>,\n  \"weight\": \"<your estimation value 0.0-1.0>\"\n}\n```\n\n## Workflow-Selector (Fallback)\n\nIf you did not find an answer that fits to the needs of user, then simply append the following to the workflows array:\n\n```json\n{\n  \"id\": 1,\n  \"parent_id\": null,\n  \"name\": \"SELECT-Workflow\",\n  \"value\": {\n    \"type\": \"workflow\",\n    \"label\": \"Request the correct workflow\",\n    \"url\": \"http://localhost:5678/webhook-test/bxKkwMfFdXNReTjV/webhook/27f68323-c314-4adf-a88f-aad037af08ee\",\n    \"selected\": false\n  },\n  \"weight\": \"<your estimation value 0.0-1.0>\"\n}\n```\n\nAlso add an element in the attentions array in the following format:\n\n```json\n{\n  \"id\": 1,\n  \"parent_id\": null,\n  \"name\": \"Considerations\",\n  \"value\": <your consideration>,\n  \"weight\": \"<your estimation value 0.0-1.0>\"\n}\n```\n\n* Notes regarding the workflow and attention elements:\n* \"id\", \"parent_id\", \"name\" are fixed values.\n* Set \"weight\" with your estimation\n\n* Notes regarding the workflow elements:\n* \"selected\", \"url\", \"type\", \"label\" are fixed values.\n\n* Notes regarding the attention elements:\n* Set \"value\" with your consideration as a string.\n\n</WORKFLOWS>\n\n# Response Format:\n\nYour response should adhere to the following json structure:\n\n```json\n{\n  \"workflows\": [\n  ],\n  \"attentions\": [\n  ]\n}\n```\n\nEnsure that you respond with valid json.\nRemove all whitespace chars from the response.\nDo not make up anything if you do not know the answer: Use the Workflow-Selector (Fallback) if no workflow fits.",
+        "hasOutputParser": true
+      },
+      "name": "Basic LLM Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        -120,
+        -280
+      ],
+      "id": "0a236d14-b5ab-4b19-bbcf-684e13acc9f9"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 440
+        }
+      },
+      "id": "f6df6121-c791-4a8d-b349-a0022d21e2af",
+      "name": "Respond 440",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        20,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d97f95ce-f25d-47ec-9c86-6cb5424248f4",
+              "leftValue": "={{ $json.payload.user_id }}",
+              "rightValue": "0",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "a9d9c5b3-2e3a-4fba-8062-a10a9aa80483",
+      "name": "Authenticated",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -560,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "27f68323-c314-4adf-a88f-aad037af08ee",
+        "authentication": "jwtAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1040,
+        -340
+      ],
+      "id": "5cb31550-f941-43ec-924c-60c6e57653fd",
+      "credentials": {
+        "jwtAuth": {
+          "id": "ZYIHn8MQ7KdNYP7e",
+          "name": "JWT Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "verify",
+        "token": "={{ $json.headers.authorization.split(\" \")[1] }}",
+        "options": {}
+      },
+      "id": "241a4b1d-bbb1-4686-94b5-fcb9afe79e60",
+      "name": "JWT",
+      "type": "n8n-nodes-base.jwt",
+      "typeVersion": 1,
+      "position": [
+        -800,
+        -300
+      ],
+      "credentials": {
+        "jwtAuth": {
+          "id": "ZYIHn8MQ7KdNYP7e",
+          "name": "JWT Auth account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Authenticated": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 440",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "JWT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JWT": {
+      "main": [
+        [
+          {
+            "node": "Authenticated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d5b58e00-0e52-455f-8f2f-55f7f0189ac8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "68f9e66783549a11e344292a1ef8ccb1a9d2307f134c3a15405499ae2f6cb69a"
+  },
+  "id": "bxKkwMfFdXNReTjV",
+  "tags": [
+    {
+      "createdAt": "2025-03-02T10:43:14.580Z",
+      "updatedAt": "2025-03-02T10:43:14.580Z",
+      "id": "AlTrjLLH9GXckgNI",
+      "name": "PlaygroundPrototype"
+    }
+  ]
+}
