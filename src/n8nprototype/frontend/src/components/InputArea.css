@@ -2,50 +2,60 @@
 .input-area {
     display: flex;
     align-items: center;
-    padding: 10px;
-    border-top: 1px solid #ccc;
-    background-color: #eee;
+    padding: 1rem;
+    background-color: white;
+    border-top: 1px solid var(--border-color);
+    gap: 0.75rem;
 }
 
 .message-textarea {
     flex: 1;
     resize: none;
-    height: 50px;
-    padding: 5px;
-    margin-right: 10px;
-    border-radius: 10px;
-    background-color: #d4f7d4;
-    border: 1px solid #ccc; /* Optional: adds a light border */
-    font-size: inherit;
+    min-height: 48px;
+    max-height: 200px;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    background-color: var(--background-light);
+    border: 1px solid var(--border-color);
+    font-size: 0.875rem;
+    line-height: 1.5;
     font-family: inherit;
+    color: var(--text-primary);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.message-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
 .new-chat-button,
 .send-button {
-    border: none;
-    color: white;
-    padding: 10px 15px;
-    font-size: 18px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.new-chat-button {
-    background-color: #007bff;
-    margin-right: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 0.5rem;
+    background-color: var(--primary-color);
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
 }
 
-.new-chat-button:hover {
-    background-color: #0069d9;
-}
-
-.send-button {
-    background-color: #4CAF50;
-}
-
+.new-chat-button:hover,
 .send-button:hover {
-    background-color: #45a049;
+    background-color: var(--primary-light);
+}
+
+.new-chat-button:active,
+.send-button:active {
+    transform: scale(0.95);
+}
+
+/* Placeholder styling */
+.message-textarea::placeholder {
+    color: var(--text-secondary);
 }

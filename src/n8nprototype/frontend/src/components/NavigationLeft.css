@@ -1,10 +1,9 @@
 /* src/components/NavigationLeft.css */
 .navigation-left {
-    background-color: #f0f0f0;
+    background-color: white;
     padding: 20px;
-    width: 200px;
+    width: 280px;
     box-sizing: border-box;
-    border-right: 1px solid #ddd;
 }
 
 .navigation-left h2 {
@@ -21,4 +20,3 @@
     margin: 10px 0;
     cursor: pointer;
 }
-

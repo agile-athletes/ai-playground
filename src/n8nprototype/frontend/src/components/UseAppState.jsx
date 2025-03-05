@@ -91,12 +91,14 @@ export function useAppState() {
                     timeoutPromise,
                 ]);
 
-                data_as_json = await response.json();
-                if (response.status === 440) {
+                // Check status before attempting to parse JSON
+                if (response.status === 401 || response.status === 403) {
                     // If backend signals a token-related issue, restart the flow.
                     restartTokenFlow();
                     return;
                 }
+
+                data_as_json = await response.json();
             }
 
             const workflowsToAppend = filterByName(data_as_json, "workflows");
