@@ -7,11 +7,16 @@ const SplashScreen = ({ loading }) => {
     useEffect(() => {
         if (loading) {
             setIsExiting(false);
-        } else {
+        } else if (!isExiting) {
             setIsExiting(true);
+            // Remove component after animation completes
+            setTimeout(() => {
+                setIsExiting(false);
+            }, 500);
         }
     }, [loading]);
 
+    // Only render if loading or during exit animation
     if (!loading && !isExiting) return null;
 
     return (
