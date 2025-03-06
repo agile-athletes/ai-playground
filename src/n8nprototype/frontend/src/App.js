@@ -51,7 +51,7 @@ function App() {
             <div className="app-wrapper">
                 <NavigationLeft workflows={workflows} selectWorkflow={selectWorkflow}/>
                 <div className="main-content">
-                    {loading && <SplashScreen />}
+                    <SplashScreen loading={loading}/>
                     <ChatWindow messages={messages}/>
                     <InputArea onSend={sendMessage} onNewChat={clearChat}/>
                 </div>
