@@ -62,9 +62,9 @@ export function useAppState() {
     }
 
     const sendMessage = async (userContent) => {
-        const toUpdateMessages = [...messages];
         const userMessage = { role: 'user', content: userContent };
-        toUpdateMessages.push(userMessage);
+        addMessageToMessages(userMessage);
+        const toUpdateMessages = [...messages];
         setLoading(true);
 
         // Create a timeout promise that rejects after 10 seconds
@@ -75,6 +75,8 @@ export function useAppState() {
         try {
             let data_as_json;
             if (mock) {
+                // Simulate backend processing time
+                await new Promise(resolve => setTimeout(resolve, 2000));
                 data_as_json = workflowSelectionSample();
                 console.log(getWebhookUrl());
             } else {
@@ -110,8 +112,7 @@ export function useAppState() {
             if (Array.isArray(attentions) && attentions.length > 0) {
                 const data_as_markdown = new JsonToMarkdownConverter(attentions).toMarkdown();
                 const message_from_n8n = { role: 'system', content: data_as_markdown };
-                toUpdateMessages.push(message_from_n8n);
-                setMessages(toUpdateMessages);
+                addMessageToMessages(message_from_n8n);
             }
 
             return data_as_json;
@@ -128,7 +129,6 @@ export function useAppState() {
             setLoading(false);
         }
     };
-
 
     return { messages,
         setMessages,

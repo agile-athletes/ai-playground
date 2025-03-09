@@ -41,7 +41,7 @@ export function workflowSelectionSample() {
                 "name": "Workflow 3",
                 "value": {
                     "type": "workflow",
-                    "label": "On Level deeper",
+                    "label": "One Level deeper",
                     "selected": false,
                     "url": "http://localhost:5678/webhook/98772d9f-9897-4030-935b-3e5efeed970b"
                 },
