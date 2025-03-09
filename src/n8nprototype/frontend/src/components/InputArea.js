@@ -3,10 +3,13 @@ import React, { useState } from 'react';
 import {AiOutlineEnter } from 'react-icons/ai';
 import {BsPencilSquare } from 'react-icons/bs';
 import './InputArea.css';
+import SplashScreen from './SplashScreen';
+import { useAppState } from './UseAppState';
 
 const InputArea = ({ onSend, onNewChat }) => {
     const [text, setText] = useState('New artificial intelligence technology is challenging our core business of on-demand translation.');
     const [selectedFile, setSelectedFile] = useState(null);
+    const { loading } = useAppState();
 
     const handleSend = () => {
         if (text.trim() === '') return; // do not send empty messages
@@ -31,10 +34,10 @@ const InputArea = ({ onSend, onNewChat }) => {
 
     return (
         <div className="input-area">
+            <SplashScreen loading={loading}/>
             <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                // placeholder="New artificial intelligence technology is challenging our core business of on-demand translation."
                 onKeyDown={handleKeyDown}
                 className="message-textarea"
             />

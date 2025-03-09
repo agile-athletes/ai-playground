@@ -1,4 +1,3 @@
-
 import React from 'react';
 import ChatWindow from './components/ChatWindow';
 import InputArea from './components/InputArea';
@@ -7,10 +6,8 @@ import './App.css';
 import {useAppState} from "./components/UseAppState";
 import {EmailForm} from "./components/EmailForm";
 import {TokenForm} from "./components/TokenForm";
-import SplashScreen from "./components/SplashScreen";
 
 function App() {
-
     const { messages,
         setMessages,
         sendMessage,
@@ -21,7 +18,6 @@ function App() {
         userEmail,
         setUserEmail,
         setJwtToken,
-        loading,
         restartTokenFlow } = useAppState();
 
     // Clear chat (flush messages)
@@ -51,7 +47,6 @@ function App() {
             <div className="app-wrapper">
                 <NavigationLeft workflows={workflows} selectWorkflow={selectWorkflow}/>
                 <div className="main-content">
-                    <SplashScreen loading={loading}/>
                     <ChatWindow messages={messages}/>
                     <InputArea onSend={sendMessage} onNewChat={clearChat}/>
                 </div>
