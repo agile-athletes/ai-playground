@@ -13,11 +13,12 @@ const WEBHOOK_URL = 'http://localhost:5678/webhook/bxKkwMfFdXNReTjV/webhook/27f6
 export function useAppState() {
     const [messages, setMessages] = useState([]);
     const [workflows, setWorkflows] = useState(workflowSelectionStart(WEBHOOK_URL));
-    const [mock] = useState(false);
-    const [step, setStep] = useState('token'); // 'email', 'token', 'authenticated'
+    const [mock] = useState(true);
+    const [step, setStep] = useState('authenticated'); // 'email', 'token', 'authenticated'
     const [userEmail, setUserEmail] = useState('');
     const [jwtToken, setJwtToken] = useState([{"token":""}])
     const [loading, setLoading] = useState(false);
+    const [loadingBlocked, setLoadingBlocked] = useState(false);
 
     const TEST = false;
 
@@ -30,6 +31,11 @@ export function useAppState() {
         }
         return result;
     }
+
+    const blockLoading = () => {
+        setLoadingBlocked(true);
+        setLoading(false);
+    };
 
     const appendWorkflowsToWorkflows = (newWorkflows) => {
         setWorkflows((prevWorkflows) => mergeWorkflows(prevWorkflows, newWorkflows));
@@ -61,6 +67,7 @@ export function useAppState() {
         addMessageToMessages(userMessage);
         const toUpdateMessages = [...messages];
         setLoading(true);
+        setLoadingBlocked(false); // Reset loading block state
 
         // Create a timeout promise that rejects after 10 seconds
         const timeoutPromise = new Promise((_, reject) =>
@@ -112,11 +119,11 @@ export function useAppState() {
 
             const reasonings = filterByName(data_as_json, "reasoning");
             const nextNavigation = findNextNavigationReasoning(reasonings);
-            if (nextNavigation?.value?.consideration) {
+            if (nextNavigation?.value?.consideration && !loadingBlocked) {
                 console.log("Jelle "+nextNavigation.value.consideration)
                 // Wait for the current state updates to complete
                 await new Promise(resolve => setTimeout(resolve, 0));
-                // Trigger next navigation
+                // Trigger next navigation only if not blocked
                 await sendMessage(nextNavigation.value.consideration);
             }
 
@@ -131,11 +138,14 @@ export function useAppState() {
             });
             // Optionally, you could also set an error state here to show a dedicated error UI
         } finally {
-            setLoading(false);
+            if (!loadingBlocked) {
+                setLoading(false);
+            }
         }
     };
 
-    return { messages,
+    return { 
+        messages,
         setMessages,
         workflows,
         handleSelectWorkflow,
@@ -144,5 +154,8 @@ export function useAppState() {
         userEmail, setUserEmail,
         setJwtToken,
         loading,
-        restartTokenFlow };
+        loadingBlocked,
+        blockLoading,
+        restartTokenFlow 
+    };
 }

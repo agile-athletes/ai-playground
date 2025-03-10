@@ -2,9 +2,9 @@
 import React, { useState } from 'react';
 import {AiOutlineEnter } from 'react-icons/ai';
 import {BsPencilSquare } from 'react-icons/bs';
+import { useAppState } from './UseAppState';
 import './InputArea.css';
 import SplashScreen from './SplashScreen';
-import { useAppState } from './UseAppState';
 
 const InputArea = ({ onSend, onNewChat }) => {
     const [text, setText] = useState('New artificial intelligence technology is challenging our core business of on-demand translation.');

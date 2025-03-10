@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useAppState } from './UseAppState';
 import './SplashScreen.css';
 
 const SplashScreen = ({ loading }) => {
     const [isExiting, setIsExiting] = useState(false);
+    const { blockLoading } = useAppState();
 
     useEffect(() => {
         if (loading) {
@@ -16,14 +18,18 @@ const SplashScreen = ({ loading }) => {
         }
     }, [loading]);
 
+    const handleClick = () => {
+        blockLoading();
+    };
+
     // Only render if loading or during exit animation
-    if (!loading && !isExiting) return null;
+    if (!loading && !isExiting ) return null;
 
     return (
-        <div className={`splash-screen ${isExiting ? 'exit' : ''}`}>
+        <div className={'splash-screen'}  onClick={handleClick}>
             <div className="splash-content">
                 <div className="loader"></div>
-                <h2 className="splash-text">AI-Processing on our server located in the EU ...</h2>
+                <h2 className="splash-text">Click to interrupt AI-Processing...</h2>
             </div>
         </div>
     );
