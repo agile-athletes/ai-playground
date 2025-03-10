@@ -1,6 +1,6 @@
 /* src/components/InputArea.css */
 .input-area {
-    position: relative;
+    position: relative;  /* Ensure SplashScreen is contained */
     display: flex;
     align-items: center;
     padding: 1rem;

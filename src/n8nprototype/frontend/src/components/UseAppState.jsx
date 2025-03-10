@@ -33,7 +33,7 @@ export function useAppState() {
     }
 
     const blockLoading = () => {
-        setLoadingBlocked(true);
+        console.log('blockLoading called');
         setLoading(false);
     };
 

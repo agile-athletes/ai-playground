@@ -1,51 +1,40 @@
-// src/components/InputArea.js
 import React, { useState } from 'react';
-import {AiOutlineEnter } from 'react-icons/ai';
-import {BsPencilSquare } from 'react-icons/bs';
 import { useAppState } from './UseAppState';
 import './InputArea.css';
 import SplashScreen from './SplashScreen';
 
 const InputArea = ({ onSend, onNewChat }) => {
-    const [text, setText] = useState('New artificial intelligence technology is challenging our core business of on-demand translation.');
-    const [selectedFile, setSelectedFile] = useState(null);
+    const [text, setText] = useState('');
     const { loading } = useAppState();
 
     const handleSend = () => {
-        if (text.trim() === '') return; // do not send empty messages
-        onSend(text, selectedFile);
+        if (text.trim() === '') return;
+        onSend(text);
         setText('');
-        setSelectedFile(null);
     };
 
-    // Prevent sending on pressing Enter in the textarea.
     const handleKeyDown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-        }
-    };
-
-    // Handle "New Chat" button click.
-    const handleNewChat = () => {
-        if (onNewChat) {
-            onNewChat();
+            handleSend();
         }
     };
 
     return (
         <div className="input-area">
-            <SplashScreen loading={loading}/>
+            <SplashScreen loading={loading} />
             <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 className="message-textarea"
+                placeholder="Type your message..."
             />
-            <button onClick={handleNewChat} className="new-chat-button" title="New Chat">
-                <BsPencilSquare  size={16} />
+            <button onClick={onNewChat} className="new-chat-button">
+                New Chat
             </button>
-            <button onClick={handleSend} className="send-button" title="Send">
-                <AiOutlineEnter size={16} />
+            <button onClick={handleSend} className="send-button">
+                Send
             </button>
         </div>
     );
