@@ -2,7 +2,8 @@ import {useState} from 'react';
 import {
     filterByName,
     workflowSelectionSample,
-    workflowSelectionStart
+    workflowSelectionStart,
+    mergeWorkflows
 } from "./helpers/experiments";
 import {JsonToMarkdownConverter} from "./helpers/json_to_markdown";
 
@@ -30,14 +31,7 @@ export function useAppState() {
     }
 
     const appendWorkflowsToWorkflows = (newWorkflows) => {
-        setWorkflows((prevWorkflows) => {
-            const currentCount = prevWorkflows.length + 1;
-            const workflowsWithIds = newWorkflows.map((workflow, index) => ({
-                ...workflow,
-                id: currentCount + index,
-            }));
-            return [...prevWorkflows, ...workflowsWithIds];
-        });
+        setWorkflows((prevWorkflows) => mergeWorkflows(prevWorkflows, newWorkflows));
     };
 
     const handleSelectWorkflow = (selectedWorkflow) => {

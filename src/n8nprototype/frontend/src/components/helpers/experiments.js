@@ -99,12 +99,26 @@ export const selectNewWorkflow = (workflows, id) => {
     });
 };
 
-// export const selectHighestWorkflow = (workflows) => {
-//     workflows.forEach((workflow) => {
-//         if (workflow.value.selected !== undefined) {
-//             workflow.value.selected = isHighestWorkflowAttention(workflow, workflows)
-//             return workflow;
-//         }
-//     });
-//     return undefined;
-// };
+export const mergeWorkflows = (existingWorkflows, newWorkflows) => {
+    // Check for URL matches and find the earliest matching index
+    const matchIndex = existingWorkflows.findIndex(existingWorkflow => 
+        newWorkflows.some(newWorkflow => 
+            newWorkflow.value.url === existingWorkflow.value.url
+        )
+    );
+
+    // Determine the base workflows to use
+    const baseWorkflows = matchIndex !== -1 
+        ? existingWorkflows.slice(0, matchIndex) 
+        : existingWorkflows;
+
+    // Add IDs to new workflows
+    const currentCount = baseWorkflows.length + 1;
+    const workflowsWithIds = newWorkflows.map((workflow, index) => ({
+        ...workflow,
+        id: currentCount + index,
+    }));
+
+    return [...baseWorkflows, ...workflowsWithIds];
+};
+
