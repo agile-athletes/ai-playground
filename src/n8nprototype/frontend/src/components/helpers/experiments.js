@@ -48,7 +48,20 @@ export function workflowSelectionSample() {
                 "weight": "0.7",
                 "parent_id": null
             }
-        ]
+        ],
+        "reasoning": [
+            {
+                "id": 1,
+                "name": "Navigate to next workflow",
+                "value": {
+                    "type": "next-navigation",
+                    "consideration": "Based on the request, the request indicates the need for a validation by the SOFT framework. This can be done by the next workflow called Soft Validation.",
+                    "suggested": "What must be done to safeguard the satisfactory in present operations?"
+                },
+                "weight": "0.7",
+                "parent_id": null
+            }
+    ],
     };
 }
 
@@ -122,3 +135,9 @@ export const mergeWorkflows = (existingWorkflows, newWorkflows) => {
     return [...baseWorkflows, ...workflowsWithIds];
 };
 
+export const findNextNavigationReasoning = (reasonings) => {
+    if (!Array.isArray(reasonings)) return null;
+    return reasonings.find(reasoning => 
+        reasoning?.value?.type === 'next-navigation'
+    );
+};

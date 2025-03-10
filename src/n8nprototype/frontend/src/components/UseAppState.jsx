@@ -3,7 +3,8 @@ import {
     filterByName,
     workflowSelectionSample,
     workflowSelectionStart,
-    mergeWorkflows
+    mergeWorkflows,
+    findNextNavigationReasoning
 } from "./helpers/experiments";
 import {JsonToMarkdownConverter} from "./helpers/json_to_markdown";
 
@@ -107,6 +108,16 @@ export function useAppState() {
                 const data_as_markdown = new JsonToMarkdownConverter(attentions).toMarkdown();
                 const message_from_n8n = { role: 'system', content: data_as_markdown };
                 addMessageToMessages(message_from_n8n);
+            }
+
+            const reasonings = filterByName(data_as_json, "reasoning");
+            const nextNavigation = findNextNavigationReasoning(reasonings);
+            if (nextNavigation?.value?.consideration) {
+                console.log("Jelle "+nextNavigation.value.consideration)
+                // Wait for the current state updates to complete
+                await new Promise(resolve => setTimeout(resolve, 0));
+                // Trigger next navigation
+                await sendMessage(nextNavigation.value.consideration);
             }
 
             return data_as_json;
