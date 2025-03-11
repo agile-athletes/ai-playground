@@ -31,7 +31,7 @@ export function workflowSelectionSample() {
                     "type": "workflow",
                     "label": "SOFT Validation",
                     "selected": false,
-                    "url": "http://localhost:5678/webhook/98772d9f-9897-4030-935b-3e5efeed970b"
+                    "url": "http://localhost:5678/webhook/workflow-2"
                 },
                 "weight": "0.7",
                 "parent_id": null
@@ -43,7 +43,7 @@ export function workflowSelectionSample() {
                     "type": "workflow",
                     "label": "One Level deeper",
                     "selected": false,
-                    "url": "http://localhost:5678/webhook/98772d9f-9897-4030-935b-3e5efeed970b"
+                    "url": "http://localhost:5678/webhook/workflow-3"
                 },
                 "weight": "0.7",
                 "parent_id": null

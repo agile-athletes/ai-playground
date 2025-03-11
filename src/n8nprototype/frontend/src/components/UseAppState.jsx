@@ -1,4 +1,4 @@
-import {useRef, useState} from 'react';
+import {useRef, useState, useEffect} from 'react';
 import {
     filterByName,
     workflowSelectionSample,
@@ -12,8 +12,11 @@ const WEBHOOK_URL = 'http://localhost:5678/webhook/bxKkwMfFdXNReTjV/webhook/27f6
 
 export function useAppState() {
     const [messages, setMessages] = useState([]);
-    const [workflows, setWorkflows] = useState(workflowSelectionStart(WEBHOOK_URL));
-    const [mock] = useState(false);
+    // Replace useState with useRef for workflows
+    const workflowsRef = useRef(workflowSelectionStart(WEBHOOK_URL));
+    // Add a state to trigger re-renders when workflows change
+    const [workflowsVersion, setWorkflowsVersion] = useState(0);
+    const [mock] = useState(true);
     const [step, setStep] = useState('authenticated'); // 'email', 'token', 'authenticated'
     const [userEmail, setUserEmail] = useState('');
     const [jwtToken, setJwtToken] = useState([{"token":""}])
@@ -24,7 +27,11 @@ export function useAppState() {
 
     const TEST = false;
 
+    // Create a getter for workflows to make the code cleaner
+    const getWorkflows = () => workflowsRef.current;
+
     const getWebhookUrl = () => {
+        const workflows = getWorkflows();
         const index = workflows.length - 1;
         let result = null;
         if (index >= 0) { result = workflows[index].value.url; }
@@ -40,14 +47,21 @@ export function useAppState() {
     };
 
     const appendWorkflowsToWorkflows = (newWorkflows) => {
-        setWorkflows((prevWorkflows) => mergeWorkflows(prevWorkflows, newWorkflows));
+        // Directly modify the ref instead of using setState
+        workflowsRef.current = mergeWorkflows(workflowsRef.current, newWorkflows);
+        // Increment version to trigger re-render
+        setWorkflowsVersion(prev => prev + 1);
+        console.log("Workflows updated, new length:", workflowsRef.current.length);
     };
 
     const handleSelectWorkflow = (selectedWorkflow) => {
+        const workflows = getWorkflows();
         const index = workflows.findIndex(workflow => workflow.id === selectedWorkflow.id);
         if (index !== -1) {
             // Remove all workflows after the selected one (including itself keeps it)
-            setWorkflows(workflows.slice(0, index + 1));
+            workflowsRef.current = workflows.slice(0, index + 1);
+            // Trigger re-render
+            setWorkflowsVersion(prev => prev + 1);
         }
     };
 
@@ -69,6 +83,35 @@ export function useAppState() {
         setShowGlassText(!!text);
     };
 
+    // Function to flush all "reasoning" elements from data_as_json
+    const flushReasonings = (data) => {
+        if (!data || typeof data !== 'object') return data;
+        
+        // If it's an array, process each element
+        if (Array.isArray(data)) {
+            return data.filter(item => {
+                // Filter out any object with name "reasoning"
+                if (item && typeof item === 'object' && item.name === "reasoning") {
+                    return false;
+                }
+                return true;
+            }).map(item => flushReasonings(item)); // Recursively process remaining items
+        }
+        
+        // If it's an object, process each property
+        const result = {};
+        for (const key in data) {
+            if (Object.prototype.hasOwnProperty.call(data, key)) {
+                // Skip the "reasoning" property
+                if (key === "reasoning") continue;
+                
+                // Recursively process the value
+                result[key] = flushReasonings(data[key]);
+            }
+        }
+        return result;
+    };
+
     const sendMessage = async (userContent) => {
         loadingBlocked.current = false;
         const userMessage = { role: 'user', content: userContent };
@@ -81,8 +124,10 @@ export function useAppState() {
             if (mock) {
                 // Simulate backend processing time
                 await new Promise(resolve => setTimeout(resolve, 2000));
-                data_as_json = workflowSelectionSample();
-                console.log(getWebhookUrl());
+                if (getWorkflows().length === 1) {
+                    data_as_json = workflowSelectionSample();
+                }
+                console.log("GET WEBHOOK: "+getWebhookUrl());
             } else {
                 const response = await fetch(getWebhookUrl(), {
                     method: 'POST',
@@ -105,6 +150,7 @@ export function useAppState() {
 
             const workflowsToAppend = filterByName(data_as_json, "workflows");
             if (Array.isArray(workflowsToAppend) && workflowsToAppend.length > 0) {
+                console.log("KKKKKKKKKKKKKKKKKKKKK: "+workflowsToAppend.length)
                 appendWorkflowsToWorkflows(workflowsToAppend);
             }
 
@@ -119,8 +165,11 @@ export function useAppState() {
             const nextNavigation = findNextNavigationReasoning(reasonings);
             if (nextNavigation?.value?.consideration && !loadingBlocked.current) {
                 console.log("Jelle "+nextNavigation.value.consideration);
+
                 // Display the consideration in the glass pane
                 updateGlassText(nextNavigation.value.consideration);
+                data_as_json = flushReasonings(data_as_json);
+
                 await new Promise(resolve => setTimeout(resolve, 0));
                 await sendMessage(nextNavigation.value.consideration);
                 // Clear the glass text after processing
@@ -149,7 +198,8 @@ export function useAppState() {
     return { 
         messages,
         setMessages,
-        workflows,
+        // Return the current value of workflows for components that need it
+        workflows: getWorkflows(),
         handleSelectWorkflow,
         sendMessage,
         step, setStep,
