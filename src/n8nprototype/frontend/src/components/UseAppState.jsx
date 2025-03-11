@@ -43,7 +43,6 @@ export function useAppState() {
     }
 
     const blockLoading = () => {
-        console.log('blockLoading called');
         loadingBlocked.current = true;
     };
 
@@ -52,7 +51,6 @@ export function useAppState() {
         workflowsRef.current = mergeWorkflows(workflowsRef.current, newWorkflows);
         // Increment version to trigger re-render
         setWorkflowsVersion(prev => prev + 1);
-        console.log("Workflows updated, new length:", workflowsRef.current.length);
     };
 
     const handleSelectWorkflow = (selectedWorkflow) => {
@@ -99,7 +97,6 @@ export function useAppState() {
                 if (getWorkflows().length === 1) {
                     data_as_json = workflowSelectionSample();
                 }
-                console.log("GET WEBHOOK: "+getWebhookUrl());
             } else {
                 const response = await fetch(getWebhookUrl(), {
                     method: 'POST',
@@ -122,7 +119,6 @@ export function useAppState() {
 
             const workflowsToAppend = filterByName(data_as_json, "workflows");
             if (Array.isArray(workflowsToAppend) && workflowsToAppend.length > 0) {
-                console.log("KKKKKKKKKKKKKKKKKKKKK: "+workflowsToAppend.length)
                 appendWorkflowsToWorkflows(workflowsToAppend);
             }
 
@@ -136,8 +132,6 @@ export function useAppState() {
             const reasonings = filterByName(data_as_json, "reasoning");
             const nextNavigation = findNextNavigationReasoning(reasonings);
             if (nextNavigation?.value?.consideration && !loadingBlocked.current) {
-                console.log("Jelle "+nextNavigation.value.consideration);
-
                 // Display the consideration in the glass pane
                 updateGlassText(nextNavigation.value.consideration);
                 data_as_json = flushReasonings(data_as_json);
@@ -150,7 +144,6 @@ export function useAppState() {
 
             return data_as_json;
         } catch (error) {
-            console.error('Error sending message:', error);
             // Update the UI with an error message instead of throwing the error
             addMessageToMessages({
                 role: 'system',

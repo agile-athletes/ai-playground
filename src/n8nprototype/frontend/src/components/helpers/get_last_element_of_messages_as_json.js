@@ -1,4 +1,3 @@
-
 export function extractJsonFromLastElement(arr) {
     if (!Array.isArray(arr) || arr.length === 0) {
         throw new Error("Input must be a non-empty array");
@@ -17,7 +16,6 @@ export function extractJsonFromLastElement(arr) {
     try {
         return JSON.parse(content);
     } catch (error) {
-        console.error("Failed to parse JSON:", error);
         return null;
     }
 }
@@ -35,4 +33,3 @@ const messages = [
 ];
 
 const resultJson = extractJsonFromLastElement(messages);
-console.log(resultJson);

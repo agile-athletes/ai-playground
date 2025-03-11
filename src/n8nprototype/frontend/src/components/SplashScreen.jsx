@@ -5,7 +5,6 @@ const SplashScreen = ({ loading, blockLoading }) => {
     const [isBlocking, setIsBlocking] = useState(false);
 
     const handleClick = (e) => {
-        console.log('SplashScreen clicked');
         e.preventDefault();
         e.stopPropagation();
         setIsBlocking(true);
@@ -13,7 +12,6 @@ const SplashScreen = ({ loading, blockLoading }) => {
     };
 
     if (!loading) {
-        console.log('SplashScreen not rendering due to !loading');
         return null;
     }
 

@@ -98,7 +98,6 @@ export class JsonToMarkdownConverter {
     getChildrenByName(name) {
         const node = this.nameToNode[name];
         if (!node) {
-            console.log(`No node found with the name '${name}'.`);
             return [];
         }
         const children = node.children;
