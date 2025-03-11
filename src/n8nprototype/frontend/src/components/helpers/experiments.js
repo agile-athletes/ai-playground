@@ -141,3 +141,29 @@ export const findNextNavigationReasoning = (reasonings) => {
         reasoning?.value?.type === 'next-navigation'
     );
 };
+
+// Function to flush all "reasoning" elements from data_as_json
+export const flushReasonings = (data) => {
+    if (!data || typeof data !== 'object') return data;
+    
+    // If it's an array, process each element
+    if (Array.isArray(data)) {
+        return data.filter(item => {
+            // Filter out any object with name "reasoning"
+            return !(item && typeof item === 'object' && item.name === "reasoning");
+        }).map(item => flushReasonings(item)); // Recursively process remaining items
+    }
+    
+    // If it's an object, process each property
+    const result = {};
+    for (const key in data) {
+        if (Object.prototype.hasOwnProperty.call(data, key)) {
+            // Skip the "reasoning" property
+            if (key === "reasoning") continue;
+            
+            // Recursively process the value
+            result[key] = flushReasonings(data[key]);
+        }
+    }
+    return result;
+};

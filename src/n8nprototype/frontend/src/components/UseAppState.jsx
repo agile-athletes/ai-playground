@@ -1,10 +1,11 @@
-import {useRef, useState, useEffect} from 'react';
+import {useRef, useState} from 'react';
 import {
     filterByName,
     workflowSelectionSample,
     workflowSelectionStart,
     mergeWorkflows,
-    findNextNavigationReasoning
+    findNextNavigationReasoning,
+    flushReasonings
 } from "./helpers/experiments";
 import {JsonToMarkdownConverter} from "./helpers/json_to_markdown";
 
@@ -15,7 +16,7 @@ export function useAppState() {
     // Replace useState with useRef for workflows
     const workflowsRef = useRef(workflowSelectionStart(WEBHOOK_URL));
     // Add a state to trigger re-renders when workflows change
-    const [workflowsVersion, setWorkflowsVersion] = useState(0);
+    const [ getWorkflowVersion, setWorkflowsVersion] = useState(0);
     const [mock] = useState(true);
     const [step, setStep] = useState('authenticated'); // 'email', 'token', 'authenticated'
     const [userEmail, setUserEmail] = useState('');
@@ -81,35 +82,6 @@ export function useAppState() {
     const updateGlassText = (text) => {
         setGlassText(text);
         setShowGlassText(!!text);
-    };
-
-    // Function to flush all "reasoning" elements from data_as_json
-    const flushReasonings = (data) => {
-        if (!data || typeof data !== 'object') return data;
-        
-        // If it's an array, process each element
-        if (Array.isArray(data)) {
-            return data.filter(item => {
-                // Filter out any object with name "reasoning"
-                if (item && typeof item === 'object' && item.name === "reasoning") {
-                    return false;
-                }
-                return true;
-            }).map(item => flushReasonings(item)); // Recursively process remaining items
-        }
-        
-        // If it's an object, process each property
-        const result = {};
-        for (const key in data) {
-            if (Object.prototype.hasOwnProperty.call(data, key)) {
-                // Skip the "reasoning" property
-                if (key === "reasoning") continue;
-                
-                // Recursively process the value
-                result[key] = flushReasonings(data[key]);
-            }
-        }
-        return result;
     };
 
     const sendMessage = async (userContent) => {
