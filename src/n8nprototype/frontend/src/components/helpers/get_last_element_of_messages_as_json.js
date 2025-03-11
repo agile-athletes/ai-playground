@@ -32,4 +32,4 @@ const messages = [
     }
 ];
 
-const resultJson = extractJsonFromLastElement(messages);
+// const resultJson = extractJsonFromLastElement(messages);
