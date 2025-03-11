@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useRef, useState} from 'react';
 import {
     filterByName,
     workflowSelectionSample,
@@ -18,7 +18,7 @@ export function useAppState() {
     const [userEmail, setUserEmail] = useState('');
     const [jwtToken, setJwtToken] = useState([{"token":""}])
     const [loading, setLoading] = useState(false);
-    const [loadingBlocked, setLoadingBlocked] = useState(false);
+    const loadingBlocked = useRef(false);
 
     const TEST = false;
 
@@ -35,7 +35,7 @@ export function useAppState() {
     const blockLoading = () => {
         console.log('blockLoading called');
         setLoading(false);
-        setLoadingBlocked(true);
+        loadingBlocked.current = true;
     };
 
     const appendWorkflowsToWorkflows = (newWorkflows) => {
@@ -64,18 +64,11 @@ export function useAppState() {
     }
 
     const sendMessage = async (userContent) => {
-        if (loadingBlocked) {
-            console.log("JJJJJJJJJJJJJJJJJJJJJJJ")
-        }
+        loadingBlocked.current = false;
         const userMessage = { role: 'user', content: userContent };
         addMessageToMessages(userMessage);
         const toUpdateMessages = [...messages];
         setLoading(true);
-
-        // Create a timeout promise that rejects after 10 seconds
-        const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Request timed out")), 60000)
-        );
 
         try {
             let data_as_json;
@@ -85,18 +78,14 @@ export function useAppState() {
                 data_as_json = workflowSelectionSample();
                 console.log(getWebhookUrl());
             } else {
-                // Use Promise.race to combine fetch with the timeout
-                const response = await Promise.race([
-                    fetch(getWebhookUrl(), {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': makeJwtToken(),
-                        },
-                        body: JSON.stringify(toUpdateMessages),
-                    }),
-                    timeoutPromise,
-                ]);
+                const response = await fetch(getWebhookUrl(), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': makeJwtToken(),
+                    },
+                    body: JSON.stringify(toUpdateMessages),
+                });
 
                 // Check status before attempting to parse JSON
                 if (response.status === 401 || response.status === 403) {
@@ -122,11 +111,9 @@ export function useAppState() {
 
             const reasonings = filterByName(data_as_json, "reasoning");
             const nextNavigation = findNextNavigationReasoning(reasonings);
-            if (nextNavigation?.value?.consideration && !loadingBlocked) {
-                console.log("Jelle "+nextNavigation.value.consideration)
-                // Wait for the current state updates to complete
+            if (nextNavigation?.value?.consideration && !loadingBlocked.current) {
+                console.log("Jelle "+nextNavigation.value.consideration);
                 await new Promise(resolve => setTimeout(resolve, 0));
-                // Trigger next navigation only if not blocked
                 await sendMessage(nextNavigation.value.consideration);
             }
 
