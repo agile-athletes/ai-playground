@@ -10,6 +10,12 @@
     background: rgba(0, 0, 0, 0.5);
     z-index: 9999;
     cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.splash-screen.blocking {
+    background: rgba(220, 53, 69, 0.6);
+    cursor: default;
 }
 
 .splash-content {
@@ -26,10 +32,18 @@
     margin: 0 auto 15px;
 }
 
+.splash-screen.blocking .loader {
+    border-top: 4px solid #dc3545;
+}
+
 .splash-text {
     color: white;
     font-size: 1rem;
     margin: 0;
+}
+
+.splash-screen.blocking .splash-text {
+    font-weight: bold;
 }
 
 @keyframes spin {
