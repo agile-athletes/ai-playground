@@ -13,7 +13,7 @@ const WEBHOOK_URL = 'http://localhost:5678/webhook/bxKkwMfFdXNReTjV/webhook/27f6
 export function useAppState() {
     const [messages, setMessages] = useState([]);
     const [workflows, setWorkflows] = useState(workflowSelectionStart(WEBHOOK_URL));
-    const [mock] = useState(true);
+    const [mock] = useState(false);
     const [step, setStep] = useState('authenticated'); // 'email', 'token', 'authenticated'
     const [userEmail, setUserEmail] = useState('');
     const [jwtToken, setJwtToken] = useState([{"token":""}])
@@ -67,15 +67,6 @@ export function useAppState() {
     const updateGlassText = (text) => {
         setGlassText(text);
         setShowGlassText(!!text);
-    };
-
-    // Test function to demonstrate the TextGlasspane functionality
-    const testGlassPane = (text) => {
-        updateGlassText(text);
-        // Clear the glass text after 5 seconds
-        setTimeout(() => {
-            updateGlassText('');
-        }, 5000);
     };
 
     const sendMessage = async (userContent) => {
@@ -170,7 +161,6 @@ export function useAppState() {
         restartTokenFlow,
         glassText,
         showGlassText,
-        updateGlassText,
-        testGlassPane
+        updateGlassText
     };
 }

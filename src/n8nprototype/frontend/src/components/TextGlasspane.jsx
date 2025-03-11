@@ -4,13 +4,16 @@ import './TextGlasspane.css';
 const TextGlasspane = ({ text, isVisible }) => {
   const [displayedText, setDisplayedText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [shouldDisplay, setShouldDisplay] = useState(false);
   const intervalRef = useRef(null);
+  const timeoutRef = useRef(null);
 
   useEffect(() => {
     // Reset when text changes or visibility changes
     if (text && isVisible) {
       setDisplayedText('');
       setCurrentIndex(0);
+      setShouldDisplay(true);
     }
   }, [text, isVisible]);
 
@@ -31,6 +34,15 @@ const TextGlasspane = ({ text, isVisible }) => {
           // Clear interval when we reach the end of the text
           if (newIndex >= text.length) {
             clearInterval(intervalRef.current);
+            
+            // Set a timeout to hide the glasspane 1 second after completion
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+            }
+            
+            timeoutRef.current = setTimeout(() => {
+              setShouldDisplay(false);
+            }, 1000);
           }
           
           return newIndex;
@@ -40,20 +52,27 @@ const TextGlasspane = ({ text, isVisible }) => {
       // Clear interval when component becomes invisible
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
-        setDisplayedText('');
-        setCurrentIndex(0);
       }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      setDisplayedText('');
+      setCurrentIndex(0);
+      setShouldDisplay(false);
     }
 
-    // Cleanup interval on unmount or when dependencies change
+    // Cleanup interval and timeout on unmount or when dependencies change
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
   }, [isVisible, text, currentIndex]);
 
-  if (!isVisible) {
+  if (!isVisible || !shouldDisplay) {
     return null;
   }
 
