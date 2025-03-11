@@ -34,7 +34,6 @@ export function useAppState() {
 
     const blockLoading = () => {
         console.log('blockLoading called');
-        setLoading(false);
         loadingBlocked.current = true;
     };
 
@@ -128,9 +127,7 @@ export function useAppState() {
             });
             // Optionally, you could also set an error state here to show a dedicated error UI
         } finally {
-            if (!loadingBlocked) {
-                setLoading(false);
-            }
+            setLoading(false);
         }
     };
 
