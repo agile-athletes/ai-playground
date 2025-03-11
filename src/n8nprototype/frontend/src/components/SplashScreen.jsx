@@ -1,15 +1,13 @@
 import React from 'react';
-import { useAppState } from './UseAppState';
 import './SplashScreen.css';
 
-const SplashScreen = ({ loading }) => {
-    const { blockLoading } = useAppState();
+const SplashScreen = ({ loading, setLoadingBlocked }) => {
 
     const handleClick = (e) => {
         console.log('SplashScreen clicked');
         e.preventDefault();
         e.stopPropagation();
-        blockLoading();
+        setLoadingBlocked(true);
     };
 
     if (!loading) {

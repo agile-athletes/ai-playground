@@ -8,7 +8,8 @@ import {EmailForm} from "./components/EmailForm";
 import {TokenForm} from "./components/TokenForm";
 
 function App() {
-    const { messages,
+    const { 
+        messages,
         setMessages,
         sendMessage,
         workflows,
@@ -18,7 +19,10 @@ function App() {
         userEmail,
         setUserEmail,
         setJwtToken,
-        restartTokenFlow } = useAppState();
+        loading,
+        blockLoading,
+        restartTokenFlow,
+    } = useAppState();
 
     // Clear chat (flush messages)
     const clearChat = () => {
@@ -48,7 +52,7 @@ function App() {
                 <NavigationLeft workflows={workflows} selectWorkflow={selectWorkflow}/>
                 <div className="main-content">
                     <ChatWindow messages={messages}/>
-                    <InputArea onSend={sendMessage} onNewChat={clearChat}/>
+                    <InputArea onSend={sendMessage} onNewChat={clearChat} loading={loading} blockLoading={blockLoading}/>
                 </div>
                 <div className="right-sidebar"></div>
             </div>)}

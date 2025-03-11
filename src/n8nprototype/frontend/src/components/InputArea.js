@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { useAppState } from './UseAppState';
 import './InputArea.css';
 import SplashScreen from './SplashScreen';
 
-const InputArea = ({ onSend, onNewChat }) => {
+const InputArea = ({ onSend, onNewChat,loading, setLoadingBlocked }) => {
     const [text, setText] = useState('');
-    const { loading } = useAppState();
 
     const handleSend = () => {
         if (text.trim() === '') return;
@@ -22,7 +20,7 @@ const InputArea = ({ onSend, onNewChat }) => {
 
     return (
         <div className="input-area">
-            <SplashScreen loading={loading} />
+            {loading && <SplashScreen loading={loading} setLoadingBlocked={setLoadingBlocked} />}
             <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}

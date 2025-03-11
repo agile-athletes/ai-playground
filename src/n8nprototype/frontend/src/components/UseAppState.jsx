@@ -35,6 +35,7 @@ export function useAppState() {
     const blockLoading = () => {
         console.log('blockLoading called');
         setLoading(false);
+        setLoadingBlocked(true);
     };
 
     const appendWorkflowsToWorkflows = (newWorkflows) => {
@@ -63,11 +64,13 @@ export function useAppState() {
     }
 
     const sendMessage = async (userContent) => {
+        if (loadingBlocked) {
+            console.log("JJJJJJJJJJJJJJJJJJJJJJJ")
+        }
         const userMessage = { role: 'user', content: userContent };
         addMessageToMessages(userMessage);
         const toUpdateMessages = [...messages];
         setLoading(true);
-        setLoadingBlocked(false); // Reset loading block state
 
         // Create a timeout promise that rejects after 10 seconds
         const timeoutPromise = new Promise((_, reject) =>
