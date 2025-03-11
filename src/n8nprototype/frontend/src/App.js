@@ -22,6 +22,8 @@ function App() {
         loading,
         blockLoading,
         restartTokenFlow,
+        glassText,
+        showGlassText
     } = useAppState();
 
     // Clear chat (flush messages)
@@ -51,7 +53,11 @@ function App() {
             <div className="app-wrapper">
                 <NavigationLeft workflows={workflows} selectWorkflow={selectWorkflow}/>
                 <div className="main-content">
-                    <ChatWindow messages={messages}/>
+                    <ChatWindow 
+                        messages={messages} 
+                        glassText={glassText} 
+                        showGlassText={showGlassText}
+                    />
                     <InputArea onSend={sendMessage} onNewChat={clearChat} loading={loading} blockLoading={blockLoading}/>
                 </div>
                 <div className="right-sidebar"></div>

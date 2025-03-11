@@ -19,6 +19,8 @@ export function useAppState() {
     const [jwtToken, setJwtToken] = useState([{"token":""}])
     const [loading, setLoading] = useState(false);
     const loadingBlocked = useRef(false);
+    const [glassText, setGlassText] = useState('');
+    const [showGlassText, setShowGlassText] = useState(false);
 
     const TEST = false;
 
@@ -61,6 +63,20 @@ export function useAppState() {
     const makeJwtToken = () => {
         return `Bearer ${jwtToken}`;
     }
+
+    const updateGlassText = (text) => {
+        setGlassText(text);
+        setShowGlassText(!!text);
+    };
+
+    // Test function to demonstrate the TextGlasspane functionality
+    const testGlassPane = (text) => {
+        updateGlassText(text);
+        // Clear the glass text after 5 seconds
+        setTimeout(() => {
+            updateGlassText('');
+        }, 5000);
+    };
 
     const sendMessage = async (userContent) => {
         loadingBlocked.current = false;
@@ -112,8 +128,12 @@ export function useAppState() {
             const nextNavigation = findNextNavigationReasoning(reasonings);
             if (nextNavigation?.value?.consideration && !loadingBlocked.current) {
                 console.log("Jelle "+nextNavigation.value.consideration);
+                // Display the consideration in the glass pane
+                updateGlassText(nextNavigation.value.consideration);
                 await new Promise(resolve => setTimeout(resolve, 0));
                 await sendMessage(nextNavigation.value.consideration);
+                // Clear the glass text after processing
+                updateGlassText('');
             }
 
             return data_as_json;
@@ -128,6 +148,10 @@ export function useAppState() {
             // Optionally, you could also set an error state here to show a dedicated error UI
         } finally {
             setLoading(false);
+            // Ensure glass text is cleared when loading is done
+            if (showGlassText) {
+                updateGlassText('');
+            }
         }
     };
 
@@ -143,6 +167,10 @@ export function useAppState() {
         loading,
         loadingBlocked,
         blockLoading,
-        restartTokenFlow 
+        restartTokenFlow,
+        glassText,
+        showGlassText,
+        updateGlassText,
+        testGlassPane
     };
 }
