@@ -56,7 +56,7 @@ export function workflowSelectionSample() {
                 "value": {
                     "type": "next-navigation",
                     "consideration": "Based on the request, the request indicates the need for a validation by the SOFT framework. This can be done by the next workflow called Soft Validation.",
-                    "suggested": "What must be done to safeguard the satisfactory in present operations?"
+                    "suggested": "Our business of online translation services is under pressure of AI-Chat Apps."
                 },
                 "weight": "0.7",
                 "parent_id": null

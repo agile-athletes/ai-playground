@@ -12,13 +12,15 @@ import {JsonToMarkdownConverter} from "./helpers/json_to_markdown";
 const WEBHOOK_URL = 'http://localhost:5678/webhook/bxKkwMfFdXNReTjV/webhook/27f68323-c314-4adf-a88f-aad037af08ee'; // Select prod
 
 export function useAppState() {
-    const [messages, setMessages] = useState([]);
+    const messagesRef = useRef([]);
+    // Add a state to trigger re-renders when messages change
+    const [messagesVersion, setMessagesVersion] = useState(0);
     // Replace useState with useRef for workflows
     const workflowsRef = useRef(workflowSelectionStart(WEBHOOK_URL));
     // Add a state to trigger re-renders when workflows change
-    const [ getWorkflowVersion, setWorkflowsVersion] = useState(0);
-    const [mock] = useState(true);
-    const [step, setStep] = useState('authenticated'); // 'email', 'token', 'authenticated'
+    const [ workflowVersion, setWorkflowsVersion] = useState(0);
+    const [mock] = useState(false);
+    const [step, setStep] = useState('token'); // 'email', 'token', 'authenticated'
     const [userEmail, setUserEmail] = useState('');
     const [jwtToken, setJwtToken] = useState([{"token":""}])
     const [loading, setLoading] = useState(false);
@@ -27,6 +29,15 @@ export function useAppState() {
     const [showGlassText, setShowGlassText] = useState(false);
 
     const TEST = false;
+
+    // Create a getter for messages to make the code cleaner
+    const getMessages = () => messagesRef.current;
+
+    // Create a setter for messages
+    const setMessages = (newMessages) => {
+        messagesRef.current = newMessages;
+        setMessagesVersion(prev => prev + 1);
+    };
 
     // Create a getter for workflows to make the code cleaner
     const getWorkflows = () => workflowsRef.current;
@@ -65,7 +76,8 @@ export function useAppState() {
     };
 
     const addMessageToMessages = (newMessage) => {
-        setMessages((prevMessages) => [...prevMessages, newMessage]);
+        messagesRef.current = [...messagesRef.current, newMessage];
+        setMessagesVersion(prev => prev + 1);
     }
 
     const restartTokenFlow = () => {
@@ -83,11 +95,15 @@ export function useAppState() {
     };
 
     const sendMessage = async (userContent) => {
+
+        if (userContent != null) {
+            addMessageToMessages({ role: 'user', content: userContent });
+        }
+
         loadingBlocked.current = false;
-        const userMessage = { role: 'user', content: userContent };
-        addMessageToMessages(userMessage);
-        const toUpdateMessages = [...messages];
         setLoading(true);
+
+        const toUpdateMessages = [...getMessages()];
 
         try {
             let data_as_json;
@@ -137,7 +153,7 @@ export function useAppState() {
                 data_as_json = flushReasonings(data_as_json);
 
                 await new Promise(resolve => setTimeout(resolve, 0));
-                await sendMessage(nextNavigation.value.consideration);
+                await sendMessage(nextNavigation?.value?.suggested);
                 // Clear the glass text after processing
                 updateGlassText('');
             }
@@ -161,10 +177,11 @@ export function useAppState() {
     };
 
     return { 
-        messages,
+        messages: getMessages(),
+        messagesVersion,
         setMessages,
-        // Return the current value of workflows for components that need it
         workflows: getWorkflows(),
+        workflowVersion,
         handleSelectWorkflow,
         sendMessage,
         step, setStep,
