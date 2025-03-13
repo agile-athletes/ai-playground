@@ -8,9 +8,9 @@ import {
     flushReasonings
 } from "./helpers/experiments";
 import {JsonToMarkdownConverter} from "./helpers/json_to_markdown";
-import { getWebhookUrl } from "../utils/baseUrl";
+import { getWebhookUrl, processWorkflowUrl } from "../utils/baseUrl";
 
-const WEBHOOK_URL = getWebhookUrl('bxKkwMfFdXNReTjV/webhook/27f68323-c314-4adf-a88f-aad037af08ee'); // Select prod
+const WEBHOOK_URL = getWebhookUrl('11e870d9-055b-4815-8d44-257a18a1cf19'); // Select prod
 
 export function useAppState() {
     const messagesRef = useRef([]);
@@ -29,9 +29,6 @@ export function useAppState() {
     const [glassText, setGlassText] = useState('');
     const [showGlassText, setShowGlassText] = useState(false);
 
-    // Get the 'test' parameter from URL, default to false if not present
-    const TEST = new URLSearchParams(window.location.search).get('test') === 'true';
-
     // Create a getter for messages to make the code cleaner
     const getMessages = () => messagesRef.current;
 
@@ -44,15 +41,12 @@ export function useAppState() {
     // Create a getter for workflows to make the code cleaner
     const getWorkflows = () => workflowsRef.current;
 
-    const getWebhookUrl = () => {
+    const getWorkflowUrl = () => {
         const workflows = getWorkflows();
         const index = workflows.length - 1;
         let result = null;
         if (index >= 0) { result = workflows[index].value.url; }
-        if ( result && TEST ) {
-            result = result.replace("/webhook/", "/webhook-test/"); // first occurrence
-        }
-        return result;
+        return processWorkflowUrl(result);
     }
 
     const blockLoading = () => {
@@ -116,7 +110,7 @@ export function useAppState() {
                     data_as_json = workflowSelectionSample();
                 }
             } else {
-                const response = await fetch(getWebhookUrl(), {
+                const response = await fetch(getWorkflowUrl(), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

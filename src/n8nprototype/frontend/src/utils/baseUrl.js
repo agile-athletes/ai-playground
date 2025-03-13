@@ -3,6 +3,12 @@
  * This replaces hardcoded localhost references with the current hostname
  */
 
+// Check if test mode is enabled via URL parameter
+export const isTestMode = () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('test') === 'true';
+};
+
 // Get the base URL for backend API calls
 export const getBaseUrl = () => {
   // Check if a backend parameter is provided in the URL
@@ -31,5 +37,21 @@ export const getWebhookUrl = (path) => {
   const baseUrl = getBaseUrl();
   // Ensure baseUrl ends with a slash before appending webhook path
   const baseWithSlash = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
-  return `${baseWithSlash}webhook/${path}`;
+  
+  // Determine if we should use the test webhook endpoint
+  const webhookPrefix = isTestMode() ? 'webhook-test' : 'webhook';
+  
+  return `${baseWithSlash}${webhookPrefix}/${path}`;
+};
+
+// Process a workflow URL based on test mode
+export const processWorkflowUrl = (url) => {
+  if (!url) return null;
+  
+  // If test mode is enabled, replace webhook with webhook-test
+  if (isTestMode()) {
+    return url.replace("/webhook/", "/webhook-test/"); // first occurrence
+  }
+  
+  return url;
 };
