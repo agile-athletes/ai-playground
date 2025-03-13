@@ -5,6 +5,17 @@
 
 // Get the base URL for backend API calls
 export const getBaseUrl = () => {
+  // Check if a backend parameter is provided in the URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const backendParam = urlParams.get('backend');
+  
+  // If backend parameter is provided, use it directly
+  if (backendParam) {
+    // The backend parameter might be URL encoded, so decode it
+    return decodeURIComponent(backendParam);
+  }
+  
+  // Otherwise, use the default logic with current hostname
   // Get the current hostname (e.g., localhost, example.com, etc.)
   const hostname = window.location.hostname;
   
@@ -17,5 +28,8 @@ export const getBaseUrl = () => {
 
 // Get the full webhook URL with the specified path
 export const getWebhookUrl = (path) => {
-  return `${getBaseUrl()}/webhook/${path}`;
+  const baseUrl = getBaseUrl();
+  // Ensure baseUrl ends with a slash before appending webhook path
+  const baseWithSlash = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  return `${baseWithSlash}webhook/${path}`;
 };
