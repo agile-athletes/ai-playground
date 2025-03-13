@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import "./Forms.css"
+import { getWebhookUrl } from "../utils/baseUrl";
 
 export function EmailForm({ onSuccess, onRestart }) {
     const [email, setEmail] = useState('');
@@ -12,7 +13,7 @@ export function EmailForm({ onSuccess, onRestart }) {
         setLoading(true);
 
         try {
-            const response = await fetch('http://localhost:5678/webhook/request-token', {
+            const response = await fetch(getWebhookUrl('request-token'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email }),

@@ -8,8 +8,9 @@ import {
     flushReasonings
 } from "./helpers/experiments";
 import {JsonToMarkdownConverter} from "./helpers/json_to_markdown";
+import { getWebhookUrl } from "../utils/baseUrl";
 
-const WEBHOOK_URL = 'http://localhost:5678/webhook/bxKkwMfFdXNReTjV/webhook/27f68323-c314-4adf-a88f-aad037af08ee'; // Select prod
+const WEBHOOK_URL = getWebhookUrl('bxKkwMfFdXNReTjV/webhook/27f68323-c314-4adf-a88f-aad037af08ee'); // Select prod
 
 export function useAppState() {
     const messagesRef = useRef([]);
@@ -28,7 +29,8 @@ export function useAppState() {
     const [glassText, setGlassText] = useState('');
     const [showGlassText, setShowGlassText] = useState(false);
 
-    const TEST = false;
+    // Get the 'test' parameter from URL, default to false if not present
+    const TEST = new URLSearchParams(window.location.search).get('test') === 'true';
 
     // Create a getter for messages to make the code cleaner
     const getMessages = () => messagesRef.current;

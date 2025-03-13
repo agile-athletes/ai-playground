@@ -1,5 +1,6 @@
 import {useState} from "react";
 import "./Forms.css"
+import { getWebhookUrl } from "../utils/baseUrl";
 
 export function TokenForm({ email, onVerified, onRestart }) {
     const [token, setToken] = useState('');
@@ -12,7 +13,7 @@ export function TokenForm({ email, onVerified, onRestart }) {
         setLoading(true);
 
         try {
-            const response = await fetch('http://localhost:5678/webhook/authenticate', {
+            const response = await fetch(getWebhookUrl('authenticate'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, token })
