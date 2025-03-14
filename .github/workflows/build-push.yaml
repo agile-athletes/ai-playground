@@ -51,11 +51,17 @@ jobs:
     needs: image
     if: github.ref == 'refs/heads/main'
     steps:
+      - name: Setup tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
       - name: Set up Kubectl
         uses: azure/k8s-set-context@v4
         with:
           method: kubeconfig
-          kubeconfig: ${{ secrets.KUBECONFIG }}
+          kubeconfig: ${{ secrets.KUBECONFIG_RKE2 }}
       - name: Deploy
         run: kubectl rollout restart deployment ${{ env.DEPLOYMENT }}
       - name: Send Job Status to Slack
