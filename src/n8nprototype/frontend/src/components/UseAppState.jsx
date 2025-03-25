@@ -8,9 +8,9 @@ import {
     flushReasonings
 } from "./helpers/experiments";
 import {JsonToMarkdownConverter} from "./helpers/json_to_markdown";
-import { getWebhookUrl, processWorkflowUrl } from "../utils/baseUrl";
+import { getWebhookUrl } from "../utils/baseUrl";
 
-const WEBHOOK_URL = getWebhookUrl('11e870d9-055b-4815-8d44-257a18a1cf19'); // Select prod
+const WEBHOOK_URL = 'selectworkflow'; // Select prod
 
 export function useAppState() {
     const messagesRef = useRef([]);
@@ -46,7 +46,7 @@ export function useAppState() {
         const index = workflows.length - 1;
         let result = null;
         if (index >= 0) { result = workflows[index].value.url; }
-        return processWorkflowUrl(result);
+        return getWebhookUrl(result);
     }
 
     const blockLoading = () => {

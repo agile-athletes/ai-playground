@@ -1,0 +1,34 @@
+[
+  {
+    "attentions": [
+      {
+        "id": 1,
+        "parent_id": null,
+        "name": "You are all set",
+        "value": "Please enter your issue.",
+        "weight": 0.8
+      },
+      {
+        "id": 2,
+        "parent_id": null,
+        "name": "Sorry: No workflow found",
+        "value": "Our translation business is under threat of ChatGPT does not indicate any specific problem description or signs of having begun formulation.",
+        "weight": 0.7
+      }
+    ],
+    "workflows": [
+      {
+        "id": 1,
+        "parent_id": null,
+        "name": "SELECT-Workflow",
+        "value": {
+          "type": "workflow",
+          "label": "Select",
+          "url": "fc3a4402-8ec8-4aec-a252-b9b8d0a07868",
+          "selected": false
+        },
+        "weight": 0.7
+      }
+    ]
+  }
+]

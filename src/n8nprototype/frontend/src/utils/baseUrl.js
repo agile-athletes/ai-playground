@@ -44,14 +44,14 @@ export const getWebhookUrl = (path) => {
   return `${baseWithSlash}${webhookPrefix}/${path}`;
 };
 
-// Process a workflow URL based on test mode
-export const processWorkflowUrl = (url) => {
-  if (!url) return null;
-  
-  // If test mode is enabled, replace webhook with webhook-test
-  if (isTestMode()) {
-    return url.replace("/webhook/", "/webhook-test/"); // first occurrence
-  }
-  
-  return url;
-};
+// TODO remove Process a workflow URL based on test mode
+// export const processWorkflowUrl = (url) => {
+//   if (!url) return null;
+//
+//   // If test mode is enabled, replace webhook with webhook-test
+//   if (isTestMode()) {
+//     return url.replace("/webhook/", "/webhook-test/"); // first occurrence
+//   }
+//
+//   return url;
+// };

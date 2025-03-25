@@ -2,14 +2,14 @@ import requests
 import json
 
 # Function to source text to n8n
-def source_to_n8n(payload, webhook_url):
+def source_to_n8n(payload, webhook_url, jwt_token=""):
     """
     Sends payload data to n8n via a webhook.
 
     :param webhook_url: The URL of the n8n webhook
     :return: The response from the n8n webhook
     """
-    headers = {"Content-Type": "application/json"}
+    headers = {"Content-Type": "application/json", "Authorization": "Bearer "+jwt_token}
 
     try:
         response = requests.post(webhook_url, data=json.dumps(payload), headers=headers)
