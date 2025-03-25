@@ -1,5 +1,3 @@
-import json
-
 from src.n8nprototype.backend.utils import source_sink
 from unittest import TestCase
 
