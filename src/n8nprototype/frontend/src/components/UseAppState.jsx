@@ -1,7 +1,6 @@
 import {useRef, useState} from 'react';
 import {
     filterByName,
-    workflowSelectionSample,
     workflowSelectionStart,
     mergeWorkflows,
     findNextNavigationReasoning,
@@ -10,7 +9,7 @@ import {
 import {JsonToMarkdownConverter} from "./helpers/json_to_markdown";
 import { getWebhookUrl } from "../utils/baseUrl";
 
-const WEBHOOK_URL = 'selectworkflow'; // Select prod
+const WEBHOOK_URL = 'JqhrnYIwvwOtTtMv/webhook/selectworkflow'; // Select prod
 
 export function useAppState() {
     const messagesRef = useRef([]);
@@ -20,7 +19,6 @@ export function useAppState() {
     const workflowsRef = useRef(workflowSelectionStart(WEBHOOK_URL));
     // Add a state to trigger re-renders when workflows change
     const [ workflowVersion, setWorkflowsVersion] = useState(0);
-    const [mock] = useState(false);
     const [step, setStep] = useState('token'); // 'email', 'token', 'authenticated'
     const [userEmail, setUserEmail] = useState('');
     const [jwtToken, setJwtToken] = useState([{"token":""}])
@@ -103,31 +101,23 @@ export function useAppState() {
 
         try {
             let data_as_json;
-            if (mock) {
-                // Simulate backend processing time
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                if (getWorkflows().length === 1) {
-                    data_as_json = workflowSelectionSample();
-                }
-            } else {
-                const response = await fetch(getWorkflowUrl(), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': makeJwtToken(),
-                    },
-                    body: JSON.stringify(toUpdateMessages),
-                });
+            const response = await fetch(getWorkflowUrl(), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': makeJwtToken(),
+                },
+                body: JSON.stringify(toUpdateMessages),
+            });
 
-                // Check status before attempting to parse JSON
-                if (response.status === 401 || response.status === 403) {
-                    // If backend signals a token-related issue, restart the flow.
-                    restartTokenFlow();
-                    return;
-                }
-
-                data_as_json = await response.json();
+            // Check status before attempting to parse JSON
+            if (response.status === 401 || response.status === 403) {
+                // If backend signals a token-related issue, restart the flow.
+                restartTokenFlow();
+                return;
             }
+
+            data_as_json = await response.json();
 
             const workflowsToAppend = filterByName(data_as_json, "workflows");
             if (Array.isArray(workflowsToAppend) && workflowsToAppend.length > 0) {
