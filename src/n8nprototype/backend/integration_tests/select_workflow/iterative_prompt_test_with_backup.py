@@ -94,6 +94,3 @@ class TestIterativePromptWithBackup(unittest.TestCase):
         print("The workflow has been successfully updated and activated.")
         print("Please check the n8n interface to ensure it's working correctly.")
 
-
-if __name__ == "__main__":
-    unittest.main()

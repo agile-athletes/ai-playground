@@ -14,14 +14,15 @@ Your task is to:
 # Collection of workflows
 
 ___
-## SOFT-Validator
+
+<SOFT-Validator>
 
 From the USER_QUESTION it is clear that the user intends to work on validating and formulating an issue for his business
 using the SOFT framework. 
 
 Add two elements:
 
-workflows Array Element (with a weighted rating to indicate relevance or accuracy):
+one to the workflows Array Element (with a weighted rating to indicate relevance or accuracy):
 
 ```json
 {
@@ -38,9 +39,11 @@ workflows Array Element (with a weighted rating to indicate relevance or accurac
 }
 ```
 
-reasoning Array Element:
+Second element (one of the following):
 
-If the USER_QUESTION indicates the user has begun to formulate the issue (e.g., it includes specific details like "Our business of online translation services is under pressure of AI-Chat Apps."), then add an element to the reasoning array in the following format:
+If the USER_QUESTION indicates the user has begun to formulate the issue (e.g., it includes specific details like 
+"Our business of online translation services is under pressure of AI-Chat Apps."), 
+then add an element to the reasoning array in the following format:
 ```json
 {
   "id": 1,
@@ -50,7 +53,7 @@ If the USER_QUESTION indicates the user has begun to formulate the issue (e.g., 
     "type": "next-navigation",
     "consideration": <your answer>,
     "suggested": <USER_QUESTION>
-  },
+    },
   "weight": "<your estimation value 0.0-1.0>"
 }
 ```
@@ -64,12 +67,12 @@ Otherwise, if the USER_QUESTION is too generic and does not show clear formulati
   "value": "Please enter your issue.",
   "weight": "<your estimation value 0.0-1.0>"
 }
-"weight": "<your estimation value 0.0-1.0>"
-}
 ```
+</SOFT-Validator>
+
 ___
 
-## Default (Fallback)
+<Default-Fallback>
 
 If you did not find an answer that fits to the needs of user, then simply append the following to the workflows array:
 
@@ -99,6 +102,7 @@ Also add an element in the attentions array in the following format:
   "weight": "<your estimation value 0.0-1.0>"
 }
 ```
+</Default-Fallback>
 
 </WORKFLOWS>
 
@@ -108,12 +112,12 @@ Your response should adhere to the following json structure:
 
 ```json
 {
-  "attentions": [],
   "workflows": [],
+  "attentions": [],
   "reasoning": []
 }
 ```
 
 Ensure that you respond with valid json.
 Remove all whitespace chars from the response.
-Do not make up anything if you do not know the answer: Use the Default (Fallback) if no workflow fits.
+Do not make up anything if you do not know the answer: Use the <Default-Fallback> if no workflow fits.
