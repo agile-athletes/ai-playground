@@ -72,7 +72,7 @@ export function workflowSelectionStart(url) {
             "name": "Root workflow",
             "value": {
                 "type": "workflow",
-                "label": "Select",
+                "label": "Explainer",
                 "selected": true,
                 "url": url
             },
@@ -139,6 +139,13 @@ export const findNextNavigationReasoning = (reasonings) => {
     if (!Array.isArray(reasonings)) return null;
     return reasonings.find(reasoning => 
         reasoning?.value?.type === 'next-navigation'
+    );
+};
+
+export const findGlassPaneReasoning = (reasonings) => {
+    if (!Array.isArray(reasonings)) return null;
+    return reasonings.find(reasoning => 
+        reasoning?.value?.type === 'to-glasspane'
     );
 };
 

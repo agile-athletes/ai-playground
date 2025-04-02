@@ -4,19 +4,21 @@ import {
     workflowSelectionStart,
     mergeWorkflows,
     findNextNavigationReasoning,
+    findGlassPaneReasoning,
     flushReasonings
 } from "./helpers/experiments";
 import {JsonToMarkdownConverter} from "./helpers/json_to_markdown";
 import { getWebhookUrl } from "../utils/baseUrl";
 
-const WEBHOOK_URL = 'JqhrnYIwvwOtTtMv/webhook/selectworkflow'; // Select prod
+// Remove 'webhook/' from these constants as getWebhookUrl already adds that prefix
+const EXPLAINER_URL = 'explainer'; // Select explainer when the user hits the first workflow
 
 export function useAppState() {
     const messagesRef = useRef([]);
     // Add a state to trigger re-renders when messages change
     const [messagesVersion, setMessagesVersion] = useState(0);
     // Replace useState with useRef for workflows
-    const workflowsRef = useRef(workflowSelectionStart(WEBHOOK_URL));
+    const workflowsRef = useRef(workflowSelectionStart(EXPLAINER_URL));
     // Add a state to trigger re-renders when workflows change
     const [ workflowVersion, setWorkflowsVersion] = useState(0);
     const [step, setStep] = useState('token'); // 'email', 'token', 'authenticated'
@@ -26,6 +28,7 @@ export function useAppState() {
     const loadingBlocked = useRef(false);
     const [glassText, setGlassText] = useState('');
     const [showGlassText, setShowGlassText] = useState(false);
+    const [useExplainerUrl, setUseExplainerUrl] = useState(false);
 
     // Create a getter for messages to make the code cleaner
     const getMessages = () => messagesRef.current;
@@ -40,6 +43,11 @@ export function useAppState() {
     const getWorkflows = () => workflowsRef.current;
 
     const getWorkflowUrl = () => {
+        if (useExplainerUrl) {
+            setUseExplainerUrl(false); // Reset after use
+            return getWebhookUrl(EXPLAINER_URL);
+        }
+        
         const workflows = getWorkflows();
         const index = workflows.length - 1;
         let result = null;
@@ -66,6 +74,12 @@ export function useAppState() {
             workflowsRef.current = workflows.slice(0, index + 1);
             // Trigger re-render
             setWorkflowsVersion(prev => prev + 1);
+            
+            // Special case: If the first workflow is selected, call sendMessage with EXPLAINER_URL
+            if (index === 0) {
+                setUseExplainerUrl(true);
+                sendMessage(null);
+            }
         }
     };
 
@@ -84,8 +98,12 @@ export function useAppState() {
     }
 
     const updateGlassText = (text) => {
-        setGlassText(text);
-        setShowGlassText(!!text);
+        return new Promise(resolve => {
+            setGlassText(text);
+            setShowGlassText(!!text);
+            // Use a small timeout to ensure state updates are processed
+            setTimeout(resolve, 3000);
+        });
     };
 
     const sendMessage = async (userContent) => {
@@ -132,16 +150,33 @@ export function useAppState() {
             }
 
             const reasonings = filterByName(data_as_json, "reasoning");
+            
+            // Check for glass pane reasoning first
+            const glassPaneReasoning = findGlassPaneReasoning(reasonings);
+            if (glassPaneReasoning?.value?.consideration && !loadingBlocked.current) {
+                // Display the consideration in the glass pane
+                await updateGlassText(glassPaneReasoning.value.consideration);
+                
+                // Wait for a longer time for users to read longer texts
+                const displayTime = Math.max(3000, glassPaneReasoning.value.consideration.length * 20);
+                
+                // Automatically clear the glass pane after the calculated time
+                setTimeout(() => {
+                    updateGlassText('');
+                }, displayTime);
+            }
+            
+            // Then check for next navigation reasoning
             const nextNavigation = findNextNavigationReasoning(reasonings);
             if (nextNavigation?.value?.consideration && !loadingBlocked.current) {
                 // Display the consideration in the glass pane
-                updateGlassText(nextNavigation.value.consideration);
+                await updateGlassText(nextNavigation.value.consideration);
                 data_as_json = flushReasonings(data_as_json);
 
                 await new Promise(resolve => setTimeout(resolve, 0));
                 await sendMessage(nextNavigation?.value?.suggested);
                 // Clear the glass text after processing
-                updateGlassText('');
+                await updateGlassText('');
             }
 
             return data_as_json;

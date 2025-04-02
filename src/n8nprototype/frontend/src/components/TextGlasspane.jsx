@@ -7,19 +7,24 @@ const TextGlasspane = ({ text, isVisible }) => {
   const [shouldDisplay, setShouldDisplay] = useState(false);
   const intervalRef = useRef(null);
   const timeoutRef = useRef(null);
+  const fullTextRef = useRef('');
 
   useEffect(() => {
     // Reset when text changes or visibility changes
     if (text && isVisible) {
+      fullTextRef.current = text; // Store the full text in a ref
       setDisplayedText('');
       setCurrentIndex(0);
       setShouldDisplay(true);
+    } else if (!isVisible) {
+      // Clear when not visible
+      setShouldDisplay(false);
     }
   }, [text, isVisible]);
 
   useEffect(() => {
     // Start or stop the character-by-character animation
-    if (isVisible && text && currentIndex < text.length) {
+    if (isVisible && fullTextRef.current && currentIndex < fullTextRef.current.length) {
       // Clear any existing interval
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -29,25 +34,18 @@ const TextGlasspane = ({ text, isVisible }) => {
       intervalRef.current = setInterval(() => {
         setCurrentIndex(prevIndex => {
           const newIndex = prevIndex + 1;
-          setDisplayedText(text.substring(0, newIndex));
+          setDisplayedText(fullTextRef.current.substring(0, newIndex));
           
           // Clear interval when we reach the end of the text
-          if (newIndex >= text.length) {
+          if (newIndex >= fullTextRef.current.length) {
             clearInterval(intervalRef.current);
-            
-            // Set a timeout to hide the glasspane 1 second after completion
-            if (timeoutRef.current) {
-              clearTimeout(timeoutRef.current);
-            }
-            
-            timeoutRef.current = setTimeout(() => {
-              setShouldDisplay(false);
-            }, 1000);
+            // No longer automatically hiding after completion
+            // Let the parent component control visibility
           }
           
           return newIndex;
         });
-      }, 50); // Speed of character appearance (milliseconds)
+      }, 30); // Speed of character appearance (milliseconds) - slightly faster
     } else if (!isVisible) {
       // Clear interval when component becomes invisible
       if (intervalRef.current) {
@@ -61,16 +59,20 @@ const TextGlasspane = ({ text, isVisible }) => {
       setShouldDisplay(false);
     }
 
+    // Capture the current values of the refs for the cleanup function
+    const currentInterval = intervalRef.current;
+    const currentTimeout = timeoutRef.current;
+
     // Cleanup interval and timeout on unmount or when dependencies change
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+      if (currentInterval) {
+        clearInterval(currentInterval);
       }
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+      if (currentTimeout) {
+        clearTimeout(currentTimeout);
       }
     };
-  }, [isVisible, text, currentIndex]);
+  }, [isVisible, currentIndex]);
 
   if (!isVisible || !shouldDisplay) {
     return null;
