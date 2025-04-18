@@ -21,7 +21,7 @@ export function workflowSelectionSample() {
                 "value": "What must be done to safeguard the satisfactory in present operations?",
                 "weight": "0.6",
                 "parent_id": 2
-            },
+            }
         ],
         "workflows": [
             {
@@ -61,7 +61,7 @@ export function workflowSelectionSample() {
                 "weight": "0.7",
                 "parent_id": null
             }
-    ],
+    ]
     };
 }
 

@@ -1,0 +1,64 @@
+{
+  "attentions": [
+    {
+      "id": 1,
+      "name": "Accuracy of USER_TEXT",
+      "value": "0.0",
+      "weight": "0.5",
+      "parent_id": null
+    },
+    {
+      "id": 2,
+      "name": "Title",
+      "value": "Gap in Identifying Planning Issues",
+      "weight": "0.7",
+      "parent_id": 1
+    },
+    {
+      "id": 3,
+      "name": "SOFT Question",
+      "value": "What must be done to safeguard the satisfactory in present operations?",
+      "weight": "0.6",
+      "parent_id": 2
+    }
+  ],
+  "workflows": [
+    {
+      "id": 2,
+      "name": "Workflow 2",
+      "value": {
+        "type": "workflow",
+        "label": "SOFT Validation",
+        "selected": false,
+        "url": "http://localhost:5678/webhook/workflow-2"
+      },
+      "weight": "0.7",
+      "parent_id": null
+    },
+    {
+      "id": 3,
+      "name": "Workflow 3",
+      "value": {
+        "type": "workflow",
+        "label": "One Level deeper",
+        "selected": false,
+        "url": "http://localhost:5678/webhook/workflow-3"
+      },
+      "weight": "0.7",
+      "parent_id": null
+    }
+  ],
+  "reasoning": [
+    {
+      "id": 1,
+      "name": "Navigate to next workflow",
+      "value": {
+        "type": "next-navigation",
+        "consideration": "Based on the request, the request indicates the need for a validation by the SOFT framework. This can be done by the next workflow called Soft Validation.",
+        "suggested": "Our business of online translation services is under pressure of AI-Chat Apps."
+      },
+      "weight": "0.7",
+      "parent_id": null
+    }
+  ]
+}

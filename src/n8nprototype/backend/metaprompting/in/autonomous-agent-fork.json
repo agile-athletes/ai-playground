@@ -1,0 +1,15 @@
+{"workflows": [
+  {
+    "label": "SWOT",
+    "pitch": "Explain the workings of SWOT to the user",
+    "prompt": "Instruction to the model.",
+    "model": "qwen2.5:14b"
+  },
+  {
+    "label": "SOFT",
+    "pitch": "validate an issue of the user according to the rules of the SOFT framework",
+    "prompt": "blah blah",
+    "model": "qwen2.5:14b"
+  }
+]}
+
