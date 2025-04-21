@@ -1,0 +1,211 @@
+{
+  "name": "TestRequestTokenWorkflows",
+  "nodes": [
+    {
+      "parameters": {
+        "authentication": "coreImapAccount",
+        "resource": "email",
+        "mailboxPath": {
+          "__rl": true,
+          "mode": "list",
+          "value": "INBOX"
+        },
+        "emailDateRange": {
+          "since": ""
+        },
+        "emailFlags": {},
+        "emailSearchFilters": {},
+        "includeParts": [
+          "textContent"
+        ]
+      },
+      "id": "3ab32f61-074a-47fb-947b-e112ea707f1e",
+      "name": "IMAP",
+      "type": "n8n-nodes-imap.imap",
+      "typeVersion": 1,
+      "position": [
+        260,
+        160
+      ],
+      "credentials": {
+        "imap": {
+          "id": "lPASBsWEKfI1fTRq",
+          "name": "IMAP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "d755c020-958a-4977-ade7-7b5e31bf9b26",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "path": "emailtokenfromtestaccount",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1591c966-b3b5-40df-8ea3-ec31f05a3d17",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        40,
+        160
+      ],
+      "webhookId": "adfdd7d4-7588-443e-a8bd-ed6c9bc70e66"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "c1a578ef-4c2b-4bcd-8071-943a2cdd1de2",
+      "name": "Respond to Webhook1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "rrGOBvVF8xfEXKh5",
+          "mode": "list",
+          "cachedResultName": "RequestTokenWorkflows"
+        },
+        "options": {}
+      },
+      "id": "d0ddc93e-9511-48c4-bb1a-5f352ee767a6",
+      "name": "Execute Workflow",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        380,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "testsubworkflow",
+        "authentication": "jwtAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "bfb6dcc4-996f-43ad-b0d9-985a591f2a53",
+      "name": "Webhook1",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        40,
+        380
+      ],
+      "webhookId": "eb6ff9ea-f739-4704-af14-b01444f1a8b1",
+      "credentials": {
+        "jwtAuth": {
+          "id": "ZYIHn8MQ7KdNYP7e",
+          "name": "JWT Auth account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook1": [
+      {
+        "json": {
+          "headers": {
+            "host": "localhost:5678",
+            "user-agent": "python-requests/2.32.3",
+            "accept-encoding": "gzip, deflate",
+            "accept": "*/*",
+            "connection": "keep-alive",
+            "content-type": "application/json",
+            "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoidGVzdEBhZ2lsZS1hdGhsZXRlcy5kZSIsImlhdCI6MTc0NTE3MTY0NSwiZXhwIjoxNzQ1MjU4MDQ1fQ.HTzijecPW4pJ2jW92IK3jyH5-zmPv0H_J36nJ7raHBQ",
+            "content-length": "67"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "testData": "Dies ist ein Test für den Subworkflow-Endpunkt"
+          },
+          "webhookUrl": "http://localhost:5678/webhook/testsubworkflow",
+          "executionMode": "production",
+          "jwtPayload": {
+            "user_id": "test@agile-athletes.de",
+            "iat": 1745171645,
+            "exp": 1745258045
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "IMAP": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "IMAP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Workflow": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Execute Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a7b90637-275f-427f-9b19-6db2834118c9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "68f9e66783549a11e344292a1ef8ccb1a9d2307f134c3a15405499ae2f6cb69a"
+  },
+  "id": "nmePkvrGPQh8DBYX",
+  "tags": []
+}

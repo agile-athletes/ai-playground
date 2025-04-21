@@ -1,0 +1,427 @@
+{
+  "name": "RequestTokenWorkflows",
+  "nodes": [
+    {
+      "parameters": {
+        "fromEmail": "donotreply@agile-athletes.de",
+        "toEmail": "={{$('Code').item.json.email}}",
+        "subject": "Your Login Token",
+        "text": "=Your login token is: {{$('Code').item.json.token}}. It expires in 24 hours.",
+        "options": {}
+      },
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [
+        700,
+        460
+      ],
+      "id": "77eac8ff-b55f-4352-96c6-76ffd94b5162",
+      "credentials": {
+        "smtp": {
+          "id": "TQhmTbA25pPtdfew",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"email\": \"sent\"\n}",
+        "options": {}
+      },
+      "id": "f6b96ffe-56b0-443d-b005-2354fc1de5af",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1240,
+        620
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const email = $json.body.email;\n// Generate a five-digit token\nconst token = Math.floor(10000 + Math.random() * 90000).toString();\n// Calculate expiry: now + 1 day (ISO string)\nconst expiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();\n\n// Expecting input JSON to contain an 'email' field\nreturn {\n  email: email,\n  token,\n  expiry\n};"
+      },
+      "id": "3ed5ed00-a3c1-4441-832b-73cc71e7ab33",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const email = $('Send Email').first().json.accepted[0]\nconst token = $('Code').first().json.token\nconst expiry = $('Code').first().json.expiry\n\n// In an n8n Function Item node:\nconst workflowStaticData = $getWorkflowStaticData('global');\n\n// 1. Ensure we have a usersByEmail object\nif (\n  !workflowStaticData.hasOwnProperty('usersByEmail') ||\n  typeof workflowStaticData.usersByEmail !== 'object'\n) {\n  workflowStaticData.usersByEmail = {};\n}\n\n// 2. Validate email: stop execution if missing\nif (email == null || email === '') {\n  throw new Error('Email is required – stopping execution.');\n}\n\n// 3. Store by email\nworkflowStaticData.usersByEmail[email] = {\n  token,\n  expiry,\n};\n\n// 4. Return confirmation\nreturn [\n  workflowStaticData.usersByEmail\n];\n"
+      },
+      "id": "3330f5ea-1473-428e-8e7e-c899ea21b503",
+      "name": "Code1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        980,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "useJson": true,
+        "claimsJson": "={ \"user_id\": \"{{ $json.user_id }}\", \"iat\": {{ $json.iat }}, \"exp\": {{ $json.iat+86400 }} }",
+        "options": {}
+      },
+      "id": "0658cb74-44e6-4157-bfc9-707b777d16df",
+      "name": "JWT",
+      "type": "n8n-nodes-base.jwt",
+      "typeVersion": 1,
+      "position": [
+        720,
+        740
+      ],
+      "credentials": {
+        "jwtAuth": {
+          "id": "ZYIHn8MQ7KdNYP7e",
+          "name": "JWT Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const workflowStaticData = $getWorkflowStaticData('global');\nconst user_id = $json.body.email\nconst token = $json.body.token\n\nif (\n  !workflowStaticData.hasOwnProperty('usersByEmail') ||\n  typeof workflowStaticData.usersByEmail !== 'object'\n) {\n  throw Error(\"no usersByEmail data\");\n}\n\nconst date = new Date();\nconst unixTimestamp = Math. floor(date. getTime() / 1000); \nreturn {\n  \"iat\": unixTimestamp,\n  \"user_id\": user_id,\n  \"role\": \"user\"  \n}"
+      },
+      "id": "a21db0c0-32bb-4a5e-808b-ff4fe0c9f42c",
+      "name": "Code2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        680
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "f44a138f-d894-4b60-afcd-80106e48e7a8",
+      "name": "Respond to Webhook2",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        980,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "verify",
+        "token": "={{ $json.headers.authorization.split(\" \")[1] }}",
+        "options": {}
+      },
+      "name": "JWT1",
+      "type": "n8n-nodes-base.jwt",
+      "typeVersion": 1,
+      "position": [
+        460,
+        920
+      ],
+      "id": "45392f62-52cc-4d22-bc85-e6d0d535cf1a",
+      "credentials": {
+        "jwtAuth": {
+          "id": "ZYIHn8MQ7KdNYP7e",
+          "name": "JWT Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const workflowStaticData = $getWorkflowStaticData('global');\n\nif (\n  !workflowStaticData.hasOwnProperty('usersByEmail') ||\n  typeof workflowStaticData.usersByEmail !== 'object'\n) {\n  throw Error(\"no usersByEmail data\");\n}\n\nconst user_id = $('JWT1').first().json.payload.user_id;\nconsole.log(user_id)\n// const user = workflowStaticData[user_id]\nconst user = workflowStaticData.usersByEmail[\"test@agile-athletes.de\"]\nconsole.log(user)\nreturn [ user ];\n"
+      },
+      "id": "20f4a196-2f6d-499a-8f53-da2a60d1935d",
+      "name": "Code3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        980
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "request-token",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook Request Token",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "request-token-1",
+      "id": "51e7e85b-452b-4930-a62f-64d84f0d7207"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "authenticate",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "http://localhost:3000",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Credentials",
+                "value": "true"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Webhook Authenticate",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        600
+      ],
+      "webhookId": "authenticate-1",
+      "id": "52c7bb0f-c08b-4bf3-873f-509e5d608c52"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d97f95ce-f25d-47ec-9c86-6cb5424248f4",
+              "leftValue": "={{ $json.token }}",
+              "rightValue": "0",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "name": "Authenticated",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1020,
+        1060
+      ],
+      "id": "aec4c5be-5fb7-4b55-b72f-53d9f5f928c9"
+    },
+    {
+      "parameters": {},
+      "id": "beadbded-4c6f-414d-9a4d-4db1125454c4",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        880
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dcf87808-0fa7-4586-a664-da4d436875ae",
+              "name": "payload",
+              "value": "={{ $('JWT1').item.json.payload }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "08ce38e1-f1b0-460e-bd6a-84c16823c1a4",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1240,
+        1060
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// stop processing\nthrow Error(\"no valid token found\")"
+      },
+      "id": "393e5bfd-bd1e-4edc-a759-9397706250d8",
+      "name": "Code4",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1240,
+        1240
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Send Email": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JWT": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "JWT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JWT1": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Request Token": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Authenticate": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Authenticated": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "Authenticated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "JWT1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3a446a9c-eb99-4124-9b67-65cb605bca85",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "68f9e66783549a11e344292a1ef8ccb1a9d2307f134c3a15405499ae2f6cb69a"
+  },
+  "id": "rrGOBvVF8xfEXKh5",
+  "tags": [
+    {
+      "createdAt": "2025-03-02T10:41:46.812Z",
+      "updatedAt": "2025-03-02T10:41:46.812Z",
+      "id": "aSsjTAKeiCPuHE4R",
+      "name": "Validation"
+    }
+  ]
+}
