@@ -2,10 +2,11 @@
  * WebSocket service for connecting to the MQTT-fed WebSocket server
  * Handles connections for the three topics: reasoning, navigation, and attentions
  */
+import mqtt from 'mqtt';
 
 // WebSocket base URL
-// TODO const WS_BASE_URL = process.env.REACT_APP_WS_URL || 'wss://ai.agile-athletes.de/mqtt';
-const WS_BASE_URL = process.env.REACT_APP_WS_URL || 'wss://localhost:9001/';
+const WS_BASE_URL = process.env.REACT_APP_WS_URL || 'wss://ai.agile-athletes.de/mqtt';
+// const WS_BASE_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:9001/mqtt';
 
 // TODO: REMOVE THIS FOR PRODUCTION - Test JWT token for development only
 // This is a hardcoded JWT token for testing purposes only
@@ -41,8 +42,9 @@ class WebSocketService {
       // The browser's WebSocket API doesn't allow setting headers directly
       // We need to make an HTTP request first with the proper Authorization header
       // This is required for the auth provider to validate the JWT token
-      const httpUrl = WS_BASE_URL.replace('wss:', 'https:').replace('ws:', 'http:');
-      
+      // TODO const httpUrl = WS_BASE_URL.replace('wss:', 'https:').replace('ws:', 'http:');
+      const httpUrl = WS_BASE_URL;
+
       // Use fetch API with proper CORS settings
       fetch(httpUrl, {
         method: 'GET',
@@ -72,7 +74,7 @@ class WebSocketService {
       this.establishWebSocketConnection();
     }
   }
-  
+
   /**
    * Establish the WebSocket connection after authentication
    * This is called after the HTTP request with the Authorization header
@@ -89,7 +91,7 @@ class WebSocketService {
         const separator = wsUrl.includes('?') ? '&' : '?';
         wsUrl = `${wsUrl}${separator}sessionId=${encodeURIComponent(this.sessionId)}`;
       }
-      
+
       console.log(`Creating WebSocket connection to ${wsUrl}`);
       this.socket = new WebSocket(wsUrl);
       
@@ -109,12 +111,12 @@ class WebSocketService {
           console.log(`Subscribed to topic: ${topic}`);
         });
       };
-      
+
       this.socket.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
           console.log('Received message:', message);
-          
+
           // Check if the message has a topic field
           if (message && message.topic && this.callbacks[message.topic]) {
             // Extract the actual data from the message
@@ -144,14 +146,14 @@ class WebSocketService {
       this.socket.onclose = (event) => {
         console.log(`WebSocket closed: ${event.code} ${event.reason}`);
         this.connected = false;
-        
+
         // Attempt to reconnect if not intentionally closed
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
           this.reconnectAttempts++;
           const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
-          
+
           console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
-          
+
           this.reconnectTimeout = setTimeout(() => {
             this.connect();
           }, delay);
@@ -254,7 +256,7 @@ class WebSocketService {
         topic: topic,
         payload: payload
       });
-      
+
       this.socket.send(message);
       console.log(`Message sent to topic ${topic}:`, payload);
     } catch (error) {
