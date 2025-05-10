@@ -30,6 +30,7 @@ class WebSocketService {
 
   /**
    * Connect to the WebSocket server and listen to all topics
+   * Uses a one-shot connection with the JWT token in the WebSocket connection
    */
   connect() {
     if (this.socket) {
@@ -39,154 +40,102 @@ class WebSocketService {
     try {
       console.log(`Connecting to WebSocket server at ${WS_BASE_URL}`);
       
-      // The browser's WebSocket API doesn't allow setting headers directly
-      // We need to make an HTTP request first with the proper Authorization header
-      // This is required for the auth provider to validate the JWT token
-      // TODO const httpUrl = WS_BASE_URL.replace('wss:', 'https:').replace('ws:', 'http:');
-      const httpUrl = WS_BASE_URL;
-
-      // Use fetch API with proper CORS settings
-      fetch(httpUrl, {
-        method: 'GET',
-        mode: 'cors',
-        credentials: 'include',  // Include cookies if needed
-        headers: {
-          'Authorization': `Bearer ${TEST_JWT_TOKEN}`,
-          'Content-Type': 'application/json'
+      // Connect directly to the MQTT server using the mqtt.js library
+      // The NGINX server expects a one-shot connection with the JWT token
+      this.socket = mqtt.connect(WS_BASE_URL, {
+        protocol: 'wss',
+        wsOptions: { 
+          headers: { Authorization: `Bearer ${TEST_JWT_TOKEN}` } 
         }
-      })
-      .then(response => {
-        if (response.ok) {
-          console.log('Authentication successful, establishing WebSocket connection');
-        } else {
-          console.warn(`Authentication request failed with status ${response.status}, attempting WebSocket connection anyway`);
-        }
-        // Proceed with WebSocket connection regardless of the response
-        this.establishWebSocketConnection();
-      })
-      .catch(error => {
-        console.warn('Authentication request failed, attempting WebSocket connection anyway:', error);
-        this.establishWebSocketConnection();
       });
-    } catch (error) {
-      console.error('Error in connect method:', error);
-      // Try to establish WebSocket connection directly as a fallback
-      this.establishWebSocketConnection();
-    }
-  }
-
-  /**
-   * Establish the WebSocket connection after authentication
-   * This is called after the HTTP request with the Authorization header
-   */
-  establishWebSocketConnection() {
-    try {
-      // Create the WebSocket connection
-      // The authentication was already done via the HTTP request with the Authorization header
-      // We only need to include the session ID if available
-      let wsUrl = WS_BASE_URL;
       
-      // Add session ID as a parameter if available
-      if (this.sessionId) {
-        const separator = wsUrl.includes('?') ? '&' : '?';
-        wsUrl = `${wsUrl}${separator}sessionId=${encodeURIComponent(this.sessionId)}`;
-      }
-
-      console.log(`Creating WebSocket connection to ${wsUrl}`);
-      this.socket = new WebSocket(wsUrl);
-      
-      this.socket.onopen = () => {
-        console.log('WebSocket connected to server');
+      // Set up event handlers for the MQTT client
+      this.socket.on('connect', () => {
+        console.log('MQTT client connected to server');
         this.connected = true;
         this.reconnectAttempts = 0;
         
         // Subscribe to all topics
         const topics = ['reasoning', 'navigation', 'attentions'];
         topics.forEach(topic => {
-          const subscribeMessage = JSON.stringify({
-            type: 'subscribe',
-            topic: topic
-          });
-          this.socket.send(subscribeMessage);
-          console.log(`Subscribed to topic: ${topic}`);
-        });
-      };
-
-      this.socket.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          console.log('Received message:', message);
-
-          // Check if the message has a topic field
-          if (message && message.topic && this.callbacks[message.topic]) {
-            // Extract the actual data from the message
-            const data = message.data || message.payload || message;
-            console.log(`Routing message to topic ${message.topic}:`, data);
-            this.notifyCallbacks(message.topic, data);
-          } else {
-            // Try to determine the topic from the message content
-            for (const topic of Object.keys(this.callbacks)) {
-              if (message && (message[topic] || (message.type === topic))) {
-                const data = message[topic] || message;
-                console.log(`Inferred topic ${topic} from message:`, data);
-                this.notifyCallbacks(topic, data);
-                break;
-              }
+          this.socket.subscribe(topic, (err) => {
+            if (!err) {
+              console.log(`Subscribed to topic: ${topic}`);
+            } else {
+              console.error(`Error subscribing to topic ${topic}:`, err);
             }
+          });
+        });
+      });
+      
+      this.socket.on('message', (topic, message) => {
+        try {
+          // Try to parse the message as JSON
+          const messageStr = message.toString();
+          const data = JSON.parse(messageStr);
+          console.log(`Received message on topic ${topic}:`, data);
+          
+          // Route the message to the appropriate callbacks
+          if (this.callbacks[topic]) {
+            this.notifyCallbacks(topic, data);
           }
         } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
+          console.error('Error parsing MQTT message:', error);
         }
-      };
+      });
       
-      this.socket.onerror = (error) => {
-        console.error('WebSocket error:', error);
-      };
+      this.socket.on('error', (error) => {
+        console.error('MQTT client error:', error);
+      });
       
-      this.socket.onclose = (event) => {
-        console.log(`WebSocket closed: ${event.code} ${event.reason}`);
+      this.socket.on('close', () => {
+        console.log('MQTT connection closed');
         this.connected = false;
-
+        
         // Attempt to reconnect if not intentionally closed
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
           this.reconnectAttempts++;
           const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
-
+          
           console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
-
+          
           this.reconnectTimeout = setTimeout(() => {
             this.connect();
           }, delay);
         }
-      };
+      });
     } catch (error) {
-      console.error('Error creating WebSocket connection:', error);
+      console.error('Error creating MQTT connection:', error);
     }
   }
+
+
 
   /**
    * Disconnect from the WebSocket server
    */
   disconnect() {
     if (this.socket) {
-      if (this.socket.readyState === WebSocket.OPEN) {
-        // Send unsubscribe messages for all topics
+      if (this.socket.connected) {
+        // Unsubscribe from all topics
         const topics = ['reasoning', 'navigation', 'attentions'];
         topics.forEach(topic => {
           try {
-            const unsubscribeMessage = JSON.stringify({
-              type: 'unsubscribe',
-              topic: topic
+            this.socket.unsubscribe(topic, (err) => {
+              if (!err) {
+                console.log(`Unsubscribed from topic: ${topic}`);
+              } else {
+                console.error(`Error unsubscribing from topic ${topic}:`, err);
+              }
             });
-            this.socket.send(unsubscribeMessage);
-            console.log(`Unsubscribed from topic: ${topic}`);
           } catch (error) {
             console.error(`Error unsubscribing from topic ${topic}:`, error);
           }
         });
       }
       
-      this.socket.close();
+      // End the MQTT connection
+      this.socket.end();
       this.socket = null;
     }
     
@@ -196,7 +145,7 @@ class WebSocketService {
     }
     
     this.connected = false;
-    console.log('WebSocket connection closed');
+    console.log('MQTT connection closed');
   }
 
   /**
@@ -245,20 +194,23 @@ class WebSocketService {
    * @param {object} payload - The message payload
    */
   send(topic, payload) {
-    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
-      console.error('WebSocket is not open');
+    if (!this.socket || !this.socket.connected) {
+      console.error('MQTT client is not connected');
       return;
     }
     
     try {
-      const message = JSON.stringify({
-        type: 'publish',
-        topic: topic,
-        payload: payload
+      // Convert payload to JSON string if it's an object
+      const message = typeof payload === 'object' ? JSON.stringify(payload) : payload;
+      
+      // Publish the message to the topic
+      this.socket.publish(topic, message, { qos: 1 }, (error) => {
+        if (error) {
+          console.error(`Error publishing message to topic ${topic}:`, error);
+        } else {
+          console.log(`Message sent to topic ${topic}:`, payload);
+        }
       });
-
-      this.socket.send(message);
-      console.log(`Message sent to topic ${topic}:`, payload);
     } catch (error) {
       console.error(`Error sending message to topic ${topic}:`, error);
     }
