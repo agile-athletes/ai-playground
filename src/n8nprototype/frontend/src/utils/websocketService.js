@@ -34,7 +34,9 @@ class WebSocketService {
    */
   connect() {
     if (this.socket) {
-      this.disconnect();
+      // we already have a socket connection
+      console.log('Already connected to WebSocket server');
+      return;
     }
 
     try {
