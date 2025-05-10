@@ -11,7 +11,7 @@ const WS_BASE_URL = process.env.REACT_APP_WS_URL || 'wss://ai.agile-athletes.de/
 // TODO: REMOVE THIS FOR PRODUCTION - Test JWT token for development only
 // This is a hardcoded JWT token for testing purposes only
 // It matches the format used in the Python test
-const TEST_JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MTQ1NTY3MDAsImV4cCI6MTcxNDY0MzEwMCwidXNlcl9pZCI6ImRpbmVzaEBhZ2lsZS1hdGhsZXRlcy5kZSJ9.qGxEKGgVQGfGzqz7-5RLNXecnLKVGMDdM5_0tGUNRiQ';
+const TEST_JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NDY4ODAwNzYuMjYwOTksImV4cCI6MTc0Njk2NjQ3Ni4yNjA5OSwidXNlcl9pZCI6ImRpbmVzaEBhZ2lsZS1hdGhsZXRlcy5kZSJ9.8pqIbrLblIwbVFb6zwC5b5v7vJCLZwgS5clY-sr3shA'
 
 class WebSocketService {
   constructor() {
@@ -38,15 +38,16 @@ class WebSocketService {
     }
 
     try {
-      console.log(`Connecting to WebSocket server at ${WS_BASE_URL}`);
+      // Add token and session_id as URL parameters
+      const token = TEST_JWT_TOKEN;
+      const urlWithParams = `${WS_BASE_URL}?auth=Bearer ${token}${this.sessionId ? `&session_id=${this.sessionId}` : ''}`;
+      
+      console.log(`Connecting to WebSocket server at ${urlWithParams}`);
       
       // Connect directly to the MQTT server using the mqtt.js library
-      // The NGINX server expects a one-shot connection with the JWT token
-      this.socket = mqtt.connect(WS_BASE_URL, {
-        protocol: 'wss',
-        wsOptions: { 
-          headers: { Authorization: `Bearer ${TEST_JWT_TOKEN}` } 
-        }
+      // Using URL parameters for authentication instead of headers due to CORS restrictions
+      this.socket = mqtt.connect(urlWithParams, {
+        protocol: 'wss'
       });
       
       // Set up event handlers for the MQTT client
