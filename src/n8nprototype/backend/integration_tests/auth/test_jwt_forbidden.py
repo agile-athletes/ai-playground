@@ -40,7 +40,7 @@ class TestJwtForbidden(unittest.TestCase):
         """Create an invented JWT token for testing"""
         # Current time and expiration time (24 hours from now)
         now = datetime.datetime.utcnow()
-        expiration = now + datetime.timedelta(hours=24)
+        expiration = now + datetime.timedelta(hours=480)
 
         # Create payload with standard claims and some custom ones
         payload = {
