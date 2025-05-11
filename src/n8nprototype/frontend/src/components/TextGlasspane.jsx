@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './TextGlasspane.css';
+import { useWebSocket } from './WebSocketContext';
 
 const TextGlasspane = ({ text, isVisible }) => {
   const [displayedText, setDisplayedText] = useState('');
@@ -8,6 +9,15 @@ const TextGlasspane = ({ text, isVisible }) => {
   const intervalRef = useRef(null);
   const timeoutRef = useRef(null);
   const fullTextRef = useRef('');
+  
+  // Get WebSocket context for subscribing to the reasoning topic
+  let webSocket = null;
+  try {
+    webSocket = useWebSocket();
+  } catch (err) {
+    // It's okay if this fails - we'll handle it gracefully
+    console.warn('WebSocket context not available in TextGlasspane');
+  }
 
   useEffect(() => {
     // Reset when text changes or visibility changes
@@ -21,6 +31,29 @@ const TextGlasspane = ({ text, isVisible }) => {
       setShouldDisplay(false);
     }
   }, [text, isVisible]);
+  
+  // Subscribe to the reasoning topic from WebSocket
+  useEffect(() => {
+    // Only attempt to subscribe if WebSocket is available
+    if (!webSocket || !webSocket.subscribe) return;
+    
+    // Subscribe to the reasoning topic
+    const unsubscribe = webSocket.subscribe('reasoning', (payload) => {
+      // Only process glasspane type messages
+      if (payload && payload.type === 'glasspane' && payload.consideration) {
+        // Update the glasspane text
+        fullTextRef.current = payload.consideration;
+        setDisplayedText('');
+        setCurrentIndex(0);
+        setShouldDisplay(true);
+      }
+    });
+    
+    // Unsubscribe when component unmounts
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [webSocket]);
 
   useEffect(() => {
     // Start or stop the character-by-character animation
