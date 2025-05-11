@@ -93,9 +93,7 @@ function App() {
                     <NavigationLeft workflows={workflows} selectWorkflow={selectWorkflow}/>
                     <div className="main-content">
                         <div className="connection-status">
-                            <span className={`status-indicator ${wsConnected ? 'connected' : 'disconnected'}`}></span>
-                            <span className="status-text">{wsConnected ? 'WebSocket Connected' : 'WebSocket Disconnected'}</span>
-                            <span className="session-id">Session ID: {sessionId}</span>
+                            <span className={`status-dot ${wsConnected ? 'connected' : 'disconnected'}`} title={wsConnected ? 'WebSocket Connected' : 'WebSocket Disconnected'}></span>
                         </div>
                         <ChatWindow 
                             messages={messages} 

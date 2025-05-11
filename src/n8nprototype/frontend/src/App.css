@@ -78,6 +78,38 @@ html, body {
     background-color: var(--primary-light);
 }
 
+/* Connection status indicator */
+.connection-status {
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    margin-bottom: 10px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.status-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.status-dot.connected {
+    background-color: #10b981; /* Green */
+    box-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
+}
+
+.status-dot.disconnected {
+    background-color: #ef4444; /* Red */
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+}
+
+.session-id {
+    margin-left: 5px;
+}
+
 /* Media queries for mobile devices */
 @media (max-width: 768px) {
     .app-wrapper {
