@@ -14,7 +14,6 @@ import logging
 import uuid
 import paho.mqtt.client as mqtt
 import jwt
-import requests
 
 # Import dotenv for .env file loading
 try:

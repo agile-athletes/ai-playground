@@ -71,8 +71,8 @@ const TextGlasspane = ({ text, isVisible }) => {
         clearInterval(typingTimerRef.current);
         typingTimerRef.current = null;
         
-        // Calculate reading time based on text length
-        const readingTime = Math.max(1500, text.length * 30);
+        // Calculate reading time based on text length (reduced by half for quicker hiding)
+        const readingTime = Math.max(750, text.length * 15);
         debugLog(`Text fully displayed, will show for ${readingTime}ms before fade-out`);
         
         // Set timer to start fade-out after reading time
@@ -105,7 +105,7 @@ const TextGlasspane = ({ text, isVisible }) => {
               setConsiderationsQueue([]);
               setCurrentConsiderationIndex(0);
             }
-          }, 1000); // Transition time for fade-out
+          }, 500); // Transition time for fade-out (reduced by half)
         }, readingTime);
       }
     }, 30); // Speed of character appearance

@@ -11,7 +11,7 @@
   z-index: 900;
   pointer-events: none; /* Allow clicks to pass through */
   opacity: 1;
-  transition: opacity 1s ease-out;
+  transition: opacity 0.5s ease-out;
 }
 
 .text-glasspane.fade-out {
