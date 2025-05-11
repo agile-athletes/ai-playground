@@ -51,9 +51,19 @@
   "reasoning": [
     {
       "id": 1,
+      "name": "Only text display",
+      "value": {
+        "type": "show-text",
+        "consideration": "This can be done by the workflow called Soft Validation."
+      },
+      "weight": "0.8",
+      "parent_id": null
+    },
+    {
+      "id": 2,
       "name": "Navigate to next workflow",
       "value": {
-        "type": "next-navigation",
+        "type": "show-text",
         "consideration": "Based on the request, the request indicates the need for a validation by the SOFT framework. This can be done by the next workflow called Soft Validation.",
         "suggested": "Our business of online translation services is under pressure of AI-Chat Apps."
       },

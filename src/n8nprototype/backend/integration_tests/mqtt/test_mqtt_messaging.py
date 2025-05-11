@@ -218,20 +218,30 @@ class TestMqttMessaging(unittest.TestCase):
             # Wait a bit to ensure subscriptions are active
             time.sleep(1)
             
-            # Publish test messages to each topic
+            # Load reasoning messages from sample-response.json
+            sample_response_path = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                'metaprompting', 'in', 'sample-response.json'
+            )
+            
+            # Read the sample response file
+            with open(sample_response_path, 'r') as f:
+                sample_response = json.load(f)
+                
+            # Extract reasoning messages from the sample response
+            reasoning_messages = sample_response.get('reasoning', [])
+            
+            # Publish the full reasoning array to each topic
             for topic in MQTT_TOPICS:
+                # Add test metadata with the full reasoning array
                 test_message = {
                     "test_id": self.client_id,
                     "timestamp": datetime.datetime.utcnow().isoformat(),
-                    "message": f"Test message for {topic}",
-                    "data": {
-                        "value": topic,
-                        "source": "integration_test"
-                    }
+                    "reasoning": reasoning_messages
                 }
                 
                 message_json = json.dumps(test_message)
-                logger.info(f"Publishing message to topic {topic}: {message_json}")
+                logger.info(f"Publishing reasoning message to topic {topic}: {message_json}")
                 
                 # Publish the message
                 result = self.mqtt_client.publish(topic, message_json, qos=1)

@@ -3,7 +3,7 @@ import './TextGlasspane.css';
 import { useWebSocket, getDebugMode } from './WebSocketContext';
 
 // Debug logging function
-const debugEnabled = false;
+const debugEnabled = true; // Enable debug logging temporarily
 function debugLog(...args) {
   if (debugEnabled) {
     console.log('[GlassPane Debug]', ...args);
@@ -15,86 +15,152 @@ const TextGlasspane = ({ text, isVisible }) => {
   const [displayedText, setDisplayedText] = useState('');
   const [showPane, setShowPane] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
   
-  // Refs for timers and full text content
-  const intervalRef = useRef(null);
-  const timeoutRef = useRef(null);
-  const fullTextRef = useRef('');
+  // Refs for timers and content
+  const typingTimerRef = useRef(null);
+  const displayTimerRef = useRef(null);
+  const hideTimerRef = useRef(null);
+  const masterHideTimerRef = useRef(null);
   
   // Get WebSocket context for subscribing to the reasoning topic
   const webSocket = useWebSocket();
 
-  // Function to start the character-by-character animation
-  const startTextAnimation = () => {
-    // Clear any existing interval
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
+  // State to track the queue of considerations to display
+  const [considerationsQueue, setConsiderationsQueue] = useState([]);
+  const [currentConsiderationIndex, setCurrentConsiderationIndex] = useState(0);
+  
+  // Function to display text with a typing animation
+  const displayWithTypingAnimation = (text, index, queueLength, considerations) => {
+    // Get the current consideration index (or use the provided index)
+    const considerationIndex = index !== undefined ? index : currentConsiderationIndex;
+    // Get the queue length (or use the current queue length)
+    const totalConsiderations = queueLength || considerationsQueue.length;
+    // Use the provided considerations array or fall back to the state
+    const considerationsArray = considerations || considerationsQueue;
     
-    // Reset animation state
-    setCurrentIndex(0);
+    debugLog(`Starting to display consideration ${considerationIndex + 1}/${totalConsiderations}: ${text.substring(0, 30)}...`);
+    
+    let currentIndex = 0;
     setDisplayedText('');
     
-    // Set up new interval to add characters one by one
-    intervalRef.current = setInterval(() => {
-      setCurrentIndex(prevIndex => {
-        const newIndex = prevIndex + 1;
-        setDisplayedText(fullTextRef.current.substring(0, newIndex));
+    // Clear typing and display timers (but keep the master timer)
+    if (typingTimerRef.current) {
+      clearInterval(typingTimerRef.current);
+      typingTimerRef.current = null;
+    }
+    if (displayTimerRef.current) {
+      clearTimeout(displayTimerRef.current);
+      displayTimerRef.current = null;
+    }
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+    
+    // Show the glasspane
+    setFadeOut(false);
+    setShowPane(true);
+    
+    // Create a typing animation
+    typingTimerRef.current = setInterval(() => {
+      if (currentIndex <= text.length) {
+        setDisplayedText(text.substring(0, currentIndex));
+        currentIndex++;
+      } else {
+        // End of text reached, clear the interval
+        clearInterval(typingTimerRef.current);
+        typingTimerRef.current = null;
         
-        // Clear interval when we reach the end of the text
-        if (newIndex >= fullTextRef.current.length) {
-          clearInterval(intervalRef.current);
-          
-          // Set timeout to start fade-out after a delay
-          // Use a short base time and a smaller scaling factor for faster disappearance
-          const readingTime = Math.max(80, fullTextRef.current.length * 10);
-          debugLog(`Setting fade-out timeout for ${readingTime}ms`);
-          
-          timeoutRef.current = setTimeout(() => {
-            debugLog('Starting fade-out animation');
-            startFadeOut();
-          }, readingTime);
-        }
+        // Calculate reading time based on text length
+        const readingTime = Math.max(1500, text.length * 30);
+        debugLog(`Text fully displayed, will show for ${readingTime}ms before fade-out`);
         
-        return newIndex;
-      });
-    }, 30); // Speed of character appearance (milliseconds)
+        // Set timer to start fade-out after reading time
+        displayTimerRef.current = setTimeout(() => {
+          debugLog(`Starting fade-out for consideration ${considerationIndex + 1}/${totalConsiderations}`);
+          debugLog(`Using considerations array: ${JSON.stringify(considerationsArray)}`);
+          setFadeOut(true);
+          
+          // Set timer to move to next consideration or hide
+          hideTimerRef.current = setTimeout(() => {
+            // Check if there are more considerations to display and if the next text exists
+            const nextIndex = considerationIndex + 1;
+            const nextConsiderationExists = nextIndex < totalConsiderations;
+            const nextText = nextConsiderationExists ? considerationsArray[nextIndex] : null;
+            
+            if (nextConsiderationExists && nextText) {
+              // Move to next consideration
+              debugLog(`Moving to consideration ${nextIndex + 1}/${totalConsiderations}`);
+              setCurrentConsiderationIndex(nextIndex);
+              setFadeOut(false);
+              
+              // Display the next consideration
+              displayWithTypingAnimation(nextText, nextIndex, totalConsiderations, considerationsArray);
+            } else {
+              // No more considerations or next text is missing, hide the glasspane
+              debugLog(`No more considerations after ${considerationIndex + 1}/${totalConsiderations}, hiding glasspane`);
+              setShowPane(false);
+              setFadeOut(false);
+              setDisplayedText('');
+              setConsiderationsQueue([]);
+              setCurrentConsiderationIndex(0);
+            }
+          }, 1000); // Transition time for fade-out
+        }, readingTime);
+      }
+    }, 30); // Speed of character appearance
   };
   
-  // Function to start the fade-out animation
-  const startFadeOut = () => {
-    setFadeOut(true);
-    
-    // Hide the glasspane completely after the CSS transition completes
-    setTimeout(() => {
-      hideGlasspane();
-    }, 1000); // Match this with the CSS transition duration
+  // Function to clear all timers
+  const clearAllTimers = () => {
+    if (typingTimerRef.current) {
+      clearInterval(typingTimerRef.current);
+      typingTimerRef.current = null;
+    }
+    if (displayTimerRef.current) {
+      clearTimeout(displayTimerRef.current);
+      displayTimerRef.current = null;
+    }
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+    if (masterHideTimerRef.current) {
+      clearTimeout(masterHideTimerRef.current);
+      masterHideTimerRef.current = null;
+    }
   };
   
   // Function to hide the glasspane
   const hideGlasspane = () => {
     debugLog('Hiding glasspane');
+    clearAllTimers();
     setShowPane(false);
     setFadeOut(false);
     setDisplayedText('');
-    setCurrentIndex(0);
+    setConsiderationsQueue([]);
+    setCurrentConsiderationIndex(0);
   };
   
   // Handle text from parent component
   useEffect(() => {
     if (text && isVisible) {
       debugLog('Showing text from parent:', text);
-      fullTextRef.current = text;
-      setDisplayedText('');
-      setCurrentIndex(0);
-      setFadeOut(false);
-      setShowPane(true);
       
-      // Start the character-by-character animation
-      startTextAnimation();
-    } else if (!isVisible && !showPane) {
-      // If parent explicitly hides it and we're not showing it due to MQTT
+      // Set up a single consideration from the parent
+      setConsiderationsQueue([text]);
+      setCurrentConsiderationIndex(0);
+      
+      // Display the text with animation
+      displayWithTypingAnimation(text);
+      
+      // Set a master timeout to ensure the glasspane always hides
+      masterHideTimerRef.current = setTimeout(() => {
+        debugLog('Master timeout triggered - ensuring glasspane is hidden');
+        hideGlasspane();
+      }, 30000); // 30 seconds max display time as a safety measure
+    } else if (!isVisible) {
+      // If parent explicitly hides it
       hideGlasspane();
     }
   }, [text, isVisible]);
@@ -117,44 +183,91 @@ const TextGlasspane = ({ text, isVisible }) => {
       // Log all incoming messages for debugging
       debugLog('TextGlasspane received message:', payload);
       
-      // Try to extract text content from different message formats
-      let textToDisplay = null;
+      // Clear any existing timers and reset state
+      clearAllTimers();
+      
+      // Extract considerations from different message formats
+      let extractedConsiderations = [];
       
       // Format 1: Standard glasspane format
       if (payload && payload.type === 'glasspane' && payload.consideration) {
         debugLog('Processing standard glasspane message');
-        textToDisplay = payload.consideration;
+        extractedConsiderations.push(payload.consideration);
       }
       // Format 2: Python test script format
       else if (payload && payload.message) {
         debugLog('Processing Python test message format');
-        textToDisplay = payload.message;
+        extractedConsiderations.push(payload.message);
       }
       // Format 3: Test reasoning message with consideration
       else if (payload && payload.consideration) {
         debugLog('Processing message with consideration field');
-        textToDisplay = payload.consideration;
+        extractedConsiderations.push(payload.consideration);
+      }
+      // Format 4: Sample-response format with reasoning array
+      else if (payload && payload.reasoning && Array.isArray(payload.reasoning)) {
+        debugLog(`Processing sample-response format with reasoning array of length ${payload.reasoning.length}`);
+        // Extract all considerations from the reasoning array
+        for (const item of payload.reasoning) {
+          debugLog('Processing reasoning item:', JSON.stringify(item));
+          if (item && item.value && item.value.consideration) {
+            extractedConsiderations.push(item.value.consideration);
+            debugLog(`Found consideration in reasoning array (${extractedConsiderations.length}):`, item.value.consideration);
+          } else {
+            debugLog('No consideration found in reasoning item');
+          }
+        }
       }
       
-      // Display the text if we found any
-      if (textToDisplay) {
-        debugLog('Displaying text:', textToDisplay);
+      // Display the considerations if we found any
+      if (extractedConsiderations.length > 0) {
+        debugLog(`Found ${extractedConsiderations.length} considerations to display sequentially`);
         
-        // Clear any existing timers
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
+        // Log all extracted considerations for debugging
+        extractedConsiderations.forEach((text, i) => {
+          debugLog(`Consideration ${i+1}: ${text.substring(0, 50)}...`);
+        });
+        
+        // Clear any existing master timeout
+        if (masterHideTimerRef.current) {
+          clearTimeout(masterHideTimerRef.current);
+          masterHideTimerRef.current = null;
         }
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
+        
+        // Create a local copy of the considerations to avoid state timing issues
+        const considerationsToDisplay = [...extractedConsiderations];
+        const queueLength = considerationsToDisplay.length;
+        
+        // Update the state first
+        setConsiderationsQueue(considerationsToDisplay);
+        setCurrentConsiderationIndex(0);
+        
+        // Make sure we have at least one consideration to display
+        if (queueLength > 0 && considerationsToDisplay[0]) {
+          debugLog(`Starting animation sequence with ${queueLength} considerations`);
+          
+          // Use setTimeout to ensure state updates have completed
+          setTimeout(() => {
+            // Log the considerations array for debugging
+            debugLog('Considerations array:', JSON.stringify(considerationsToDisplay));
+            
+            // Use the local copy to avoid state timing issues
+            displayWithTypingAnimation(
+              considerationsToDisplay[0], 
+              0, 
+              queueLength, 
+              considerationsToDisplay
+            );
+            
+            // Set a master timeout to ensure the glasspane always hides
+            masterHideTimerRef.current = setTimeout(() => {
+              debugLog('Master timeout triggered - ensuring glasspane is hidden');
+              hideGlasspane();
+            }, Math.max(30000, queueLength * 10000)); // Adjust timeout based on number of considerations
+          }, 100); // Longer timeout to ensure state updates
+        } else {
+          debugLog('No valid considerations to display');
         }
-        
-        // Store the full text and reset animation state
-        fullTextRef.current = textToDisplay;
-        setFadeOut(false);
-        setShowPane(true);
-        
-        // Start the character-by-character animation
-        startTextAnimation();
       } else {
         debugLog('No displayable text found in message:', payload);
       }
@@ -162,12 +275,7 @@ const TextGlasspane = ({ text, isVisible }) => {
     
     // Cleanup function
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      clearAllTimers();
       if (unsubscribe) {
         unsubscribe();
       }
