@@ -9,12 +9,35 @@ import {
 } from "./helpers/experiments";
 import {JsonToMarkdownConverter} from "./helpers/json_to_markdown";
 import { getWebhookUrl } from "../utils/baseUrl";
-import websocketService from "../utils/websocketService";
 
 // Remove 'webhook/' from these constants as getWebhookUrl already adds that prefix
 const EXPLAINER_URL = 'explainer'; // Select explainer when the user hits the first workflow
 
 export function useAppState() {
+    // We'll use a ref to store the WebSocket context once it's available
+    const webSocketContext = useRef(null);
+    
+    // Function to safely access WebSocket context
+    // const getWebSocketContext = () => {
+    //     try {
+    //         // Try to get from ref first (for components using this hook)
+    //         if (webSocketContext.current) {
+    //             return webSocketContext.current;
+    //         }
+    //
+    //         // For components not wrapped in WebSocketProvider, we'll use a global approach
+    //         // This is a fallback and not ideal, but helps with the current architecture
+    //         if (window.webSocketInstance) {
+    //             return window.webSocketInstance;
+    //         }
+    //
+    //         return null;
+    //     } catch (err) {
+    //         console.error('Error accessing WebSocket context:', err);
+    //         return null;
+    //     }
+    // };
+    
     const messagesRef = useRef([]);
     // Add a state to trigger re-renders when messages change
     const [messagesVersion, setMessagesVersion] = useState(0);
@@ -102,52 +125,16 @@ export function useAppState() {
     // Initialize WebSocket connections when authenticated
     useEffect(() => {
         if (step === 'authenticated') {
-            // Set the session ID for the WebSocket service
-            websocketService.setSessionId(sessionIdRef.current);
-            
-            // Connect to all WebSocket topics
-            websocketService.connect();
-            
-            // Subscribe to reasoning messages (glasspane)
-            const reasoningUnsubscribe = websocketService.subscribe('reasoning', (data) => {
-                if (data && data.consideration) {
-                    updateGlassText(data.consideration);
-                    
-                    // Wait for a longer time for users to read longer texts
-                    const displayTime = Math.max(3000, data.consideration.length * 20);
-                    
-                    // Automatically clear the glass pane after the calculated time
-                    setTimeout(() => {
-                        updateGlassText('');
-                    }, displayTime);
+            // Check for WebSocket context periodically
+            const checkInterval = setInterval(() => {
+                if (window.webSocketInstance && !webSocketContext.current) {
+                    webSocketContext.current = window.webSocketInstance;
+                    clearInterval(checkInterval);
                 }
-            });
+            }, 1000);
             
-            // Subscribe to navigation messages (left panel)
-            const navigationUnsubscribe = websocketService.subscribe('navigation', (data) => {
-                if (data && Array.isArray(data)) {
-                    // Handle navigation updates (workflows)
-                    appendWorkflowsToWorkflows(data);
-                }
-            });
-            
-            // Subscribe to attentions messages (center)
-            const attentionsUnsubscribe = websocketService.subscribe('attentions', (data) => {
-                if (data && Array.isArray(data)) {
-                    // Convert attentions to markdown and add to messages
-                    const data_as_markdown = new JsonToMarkdownConverter(data).toMarkdown();
-                    const message_from_n8n = { role: 'system', content: data_as_markdown };
-                    addMessageToMessages(message_from_n8n);
-                }
-            });
-            
-            // Cleanup function
-            return () => {
-                reasoningUnsubscribe();
-                navigationUnsubscribe();
-                attentionsUnsubscribe();
-                websocketService.disconnect();
-            };
+            // Clean up interval on unmount
+            return () => clearInterval(checkInterval);
         }
     }, [step]);
 
@@ -191,22 +178,16 @@ export function useAppState() {
 
             data_as_json = await response.json();
 
-            // Extract data from response and publish to appropriate MQTT topics via WebSocket
+            // Extract data from response and update local state
             const workflowsToAppend = filterByName(data_as_json, "workflows");
             if (Array.isArray(workflowsToAppend) && workflowsToAppend.length > 0) {
-                // Publish to navigation topic
-                websocketService.send('navigation', workflowsToAppend);
-                
-                // Still update local state for immediate response
+                // Update local state
                 appendWorkflowsToWorkflows(workflowsToAppend);
             }
 
             const attentions = filterByName(data_as_json, "attentions");
             if (Array.isArray(attentions) && attentions.length > 0) {
-                // Publish to attentions topic
-                websocketService.send('attentions', attentions);
-                
-                // Still update local state for immediate response
+                // Update local state
                 const data_as_markdown = new JsonToMarkdownConverter(attentions).toMarkdown();
                 const message_from_n8n = { role: 'system', content: data_as_markdown };
                 addMessageToMessages(message_from_n8n);
@@ -217,13 +198,7 @@ export function useAppState() {
             // Check for glass pane reasoning first
             const glassPaneReasoning = findGlassPaneReasoning(reasonings);
             if (glassPaneReasoning?.value?.consideration && !loadingBlocked.current) {
-                // Publish to reasoning topic
-                websocketService.send('reasoning', {
-                    consideration: glassPaneReasoning.value.consideration,
-                    type: 'glasspane'
-                });
-                
-                // Still update local state for immediate response
+                // Update local state for immediate response
                 await updateGlassText(glassPaneReasoning.value.consideration);
                 
                 // Wait for a longer time for users to read longer texts
@@ -238,12 +213,6 @@ export function useAppState() {
             // Then check for next navigation reasoning
             const nextNavigation = findNextNavigationReasoning(reasonings);
             if (nextNavigation?.value?.consideration && !loadingBlocked.current) {
-                // Publish to reasoning topic
-                websocketService.send('reasoning', {
-                    consideration: nextNavigation.value.consideration,
-                    type: 'navigation',
-                    suggested: nextNavigation?.value?.suggested
-                });
                 
                 // Still update local state for immediate response
                 await updateGlassText(nextNavigation.value.consideration);
@@ -283,6 +252,7 @@ export function useAppState() {
         sendMessage,
         step, setStep,
         userEmail, setUserEmail,
+        jwtToken,
         setJwtToken,
         loading,
         loadingBlocked,
