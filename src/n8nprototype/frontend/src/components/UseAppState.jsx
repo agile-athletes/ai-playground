@@ -45,9 +45,11 @@ export function useAppState() {
     const workflowsRef = useRef(workflowSelectionStart(EXPLAINER_URL));
     // Add a state to trigger re-renders when workflows change
     const [ workflowVersion, setWorkflowsVersion] = useState(0);
+    // For testing, we can start in authenticated mode
     const [step, setStep] = useState('authenticated'); // TODO 'email', 'token', 'authenticated'
     const [userEmail, setUserEmail] = useState('');
-    const [jwtToken, setJwtToken] = useState([{"token":""}])
+    // Use test token for MQTT connection
+    const [jwtToken, setJwtToken] = useState([{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NDY5NDYzOTUuNzE4NTY0LCJleHAiOjE3NDg2NzQzOTUuNzE4NTY0LCJ1c2VyX2lkIjoidXNlckBleGFtcGxlLmNvbSJ9.kcs665-fbXIBisx0xkc9HuYdTXg0xHpV4KNK6TxvTMo"}])
     const [loading, setLoading] = useState(false);
     const loadingBlocked = useRef(false);
     const [glassText, setGlassText] = useState('');

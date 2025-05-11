@@ -9,13 +9,18 @@ let isConnected = false;
 let topicCallbacks = { reasoning: new Map() };
 let subscribedTopics = new Set(); // Track subscribed topics at module level
 let initializationInProgress = false; // Prevent concurrent initialization
-let debugMode = true; // Set to true to enable detailed logging
+let debugMode = false; // Set to true to enable detailed logging
 
 // Debug logging function
 function debugLog(...args) {
     if (debugMode) {
         console.log('[MQTT Debug]', ...args);
     }
+}
+
+// Function to get the current debug mode
+function getDebugMode() {
+    return debugMode;
 }
 
 // Create context
@@ -93,12 +98,33 @@ function initializeMqttClient(authToken, sessionId, onConnect, onDisconnect, onE
                 });
             }
             
+            // Also subscribe to the base topics without session ID
+            // This allows receiving messages from the Python test script
+            if ( debugMode ) {
+                ['reasoning', 'navigation', 'attentions'].forEach(baseTopic => {
+                    if (!subscribedTopics.has(baseTopic)) {
+                        mqttClient.subscribe(baseTopic, {qos: 1}, (err) => {
+                            if (err) {
+                                console.error(`Error subscribing to base topic ${baseTopic}:`, err);
+                            } else {
+                                debugLog(`Subscribed to base topic: ${baseTopic}`);
+                                subscribedTopics.add(baseTopic);
+                            }
+                        });
+                    }
+                });
+            }
+            
             onConnect();
         });
         
         mqttClient.on('message', (topic, message) => {
             try {
-                const payload = JSON.parse(message.toString());
+                // Always log received messages to help with debugging
+                const messageStr = message.toString();
+                debugLog(`MQTT message received on topic ${topic}:`, messageStr);
+                
+                const payload = JSON.parse(messageStr);
                 debugLog(`Received message on topic ${topic}:`, payload);
                 const callbacks = topicCallbacks[topic];
                 
@@ -245,3 +271,6 @@ export function useWebSocket() {
     }
     return context;
 }
+
+// Export the debug mode getter
+export { getDebugMode };
