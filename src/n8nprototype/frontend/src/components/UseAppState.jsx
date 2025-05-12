@@ -1,6 +1,5 @@
 import {useRef, useState, useEffect} from 'react';
 import {
-    filterByName,
     workflowSelectionStart,
     mergeWorkflows
 } from "./helpers/experiments";
