@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 MQTT_HOST = "ai.agile-athletes.de"  # Hostname for the MQTT server
 MQTT_PORT = 443  # Default WSS port
 MQTT_PATH = "/mqtt"  # Path for the MQTT WebSocket endpoint
-MQTT_TOPICS = ["reasoning", "navigation", "attentions"]
+MQTT_TOPICS = ["reasoning", "workflows", "attentions"]
 TIMEOUT_SECONDS = 10
 
 # Flag to determine if we're running in a test environment
@@ -331,14 +331,14 @@ class TestMqttMessaging(unittest.TestCase):
                         "consideration": f"Test reasoning message from integration test at {datetime.datetime.utcnow().isoformat()}",
                         "type": "glasspane"
                     }
-                elif topic == "navigation":
+                elif topic == "workflows":
                     test_message = [
                         {
-                            "id": f"test-nav-{uuid.uuid4()}",
-                            "name": "Test Navigation Item",
+                            "id": f"test-workflow-{uuid.uuid4()}",
+                            "name": "Test Workflow Item",
                             "value": {
-                                "url": "https://example.com/test",
-                                "description": "Test navigation from integration test"
+                                "url": "test-workflow",
+                                "description": "Test workflow from integration test"
                             }
                         }
                     ]

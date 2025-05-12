@@ -108,8 +108,9 @@ export function useAppState() {
                     webSocketContext.current = window.webSocketInstance;
                     clearInterval(checkInterval);
                     
-                    // Once we have the WebSocket context, set up the attentions subscription
+                    // Once we have the WebSocket context, set up the subscriptions
                     setupAttentionsSubscription();
+                    setupWorkflowsSubscription();
                 }
             }, 1000);
             
@@ -157,8 +158,41 @@ export function useAppState() {
         });
     };
     
-    // We don't need a separate useEffect for attentions subscription anymore
-    // as we're setting it up in the WebSocket initialization effect
+    // Function to set up subscription to workflows topic
+    const setupWorkflowsSubscription = () => {
+        if (!webSocketContext.current?.subscribe) {
+            console.warn('WebSocket subscribe method not available for workflows');
+            return;
+        }
+        
+        console.log('Setting up workflows subscription');
+        
+        // Subscribe to the workflows topic
+        return webSocketContext.current.subscribe('workflows', (payload) => {
+            console.log('Received workflows via WebSocket:', payload);
+            
+            // Process workflows from different message formats
+            let workflowsToAppend = [];
+            
+            // Format 1: Direct workflows array
+            if (Array.isArray(payload)) {
+                workflowsToAppend = payload;
+            }
+            // Format 2: Workflows in a property
+            else if (payload && Array.isArray(payload.workflows)) {
+                workflowsToAppend = payload.workflows;
+            }
+            
+            // Process workflows if we found any
+            if (workflowsToAppend.length > 0) {
+                // Update local state
+                appendWorkflowsToWorkflows(workflowsToAppend);
+            }
+        });
+    };
+    
+    // We don't need separate useEffects for subscriptions anymore
+    // as we're setting them up in the WebSocket initialization effect
 
     const sendMessage = (userContent) => {
         if (loadingBlocked.current) {
@@ -202,14 +236,7 @@ export function useAppState() {
             return response.json();
         })
         .then(data_as_json => {
-            // Extract workflows from response and update local state
-            const workflowsToAppend = filterByName(data_as_json, "workflows");
-            if (Array.isArray(workflowsToAppend) && workflowsToAppend.length > 0) {
-                // Update local state
-                appendWorkflowsToWorkflows(workflowsToAppend);
-            }
-            
-            // Note: We no longer process attentions here as they are handled by the WebSocket subscription
+            // Note: We no longer process workflows or attentions here as they are handled by WebSocket subscriptions
 
             // Note: We no longer need to process reasoning messages here
             // as they are now handled by the WebSocket subscription in TextGlasspane.jsx
