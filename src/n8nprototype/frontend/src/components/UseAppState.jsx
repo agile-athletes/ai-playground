@@ -16,28 +16,6 @@ const EXPLAINER_URL = 'explainer'; // Select explainer when the user hits the fi
 export function useAppState() {
     // We'll use a ref to store the WebSocket context once it's available
     const webSocketContext = useRef(null);
-    
-    // Function to safely access WebSocket context
-    // const getWebSocketContext = () => {
-    //     try {
-    //         // Try to get from ref first (for components using this hook)
-    //         if (webSocketContext.current) {
-    //             return webSocketContext.current;
-    //         }
-    //
-    //         // For components not wrapped in WebSocketProvider, we'll use a global approach
-    //         // This is a fallback and not ideal, but helps with the current architecture
-    //         if (window.webSocketInstance) {
-    //             return window.webSocketInstance;
-    //         }
-    //
-    //         return null;
-    //     } catch (err) {
-    //         console.error('Error accessing WebSocket context:', err);
-    //         return null;
-    //     }
-    // };
-    
     const messagesRef = useRef([]);
     // Add a state to trigger re-renders when messages change
     const [messagesVersion, setMessagesVersion] = useState(0);
@@ -45,15 +23,15 @@ export function useAppState() {
     const workflowsRef = useRef(workflowSelectionStart(EXPLAINER_URL));
     // Add a state to trigger re-renders when workflows change
     const [ workflowVersion, setWorkflowsVersion] = useState(0);
+
     // For testing, we can start in authenticated mode
     const [step, setStep] = useState('authenticated'); // TODO 'email', 'token', 'authenticated'
-    const [userEmail, setUserEmail] = useState('');
     // Use test token for MQTT connection
     const [jwtToken, setJwtToken] = useState([{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NDY5NDYzOTUuNzE4NTY0LCJleHAiOjE3NDg2NzQzOTUuNzE4NTY0LCJ1c2VyX2lkIjoidXNlckBleGFtcGxlLmNvbSJ9.kcs665-fbXIBisx0xkc9HuYdTXg0xHpV4KNK6TxvTMo"}])
+
+    const [userEmail, setUserEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const loadingBlocked = useRef(false);
-    const [glassText, setGlassText] = useState('');
-    const [showGlassText, setShowGlassText] = useState(false);
     const [useExplainerUrl, setUseExplainerUrl] = useState(false);
     const sessionIdRef = useRef(`session-${Date.now()}`);
 
@@ -140,29 +118,29 @@ export function useAppState() {
         }
     }, [step]);
 
-    const updateGlassText = (text) => {
-        return new Promise(resolve => {
-            setGlassText(text);
-            setShowGlassText(!!text);
-            // Use a small timeout to ensure state updates are processed
-            setTimeout(resolve, 3000);
-        });
-    };
-
     const sendMessage = async (userContent) => {
-
-        if (userContent != null) {
-            addMessageToMessages({ role: 'user', content: userContent });
+        if (loadingBlocked.current) {
+            return;
         }
-
-        loadingBlocked.current = false;
         setLoading(true);
-
-        const toUpdateMessages = [...getMessages()];
+        loadingBlocked.current = false;
 
         try {
-            let data_as_json;
-            const response = await fetch(getWorkflowUrl(), {
+            // Add user message to the chat if provided
+            if (userContent) {
+                addMessageToMessages({ role: 'user', content: userContent });
+            }
+
+            // Prepare the messages to send to the backend
+            const toUpdateMessages = {
+                messages: getMessages(),
+            };
+
+            // Get the correct webhook URL based on the current workflow
+            const webhookUrl = getWorkflowUrl();
+
+            // Send the request to the backend
+            const response = await fetch(webhookUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -178,7 +156,7 @@ export function useAppState() {
                 return;
             }
 
-            data_as_json = await response.json();
+            const data_as_json = await response.json();
 
             // Extract data from response and update local state
             const workflowsToAppend = filterByName(data_as_json, "workflows");
@@ -195,36 +173,8 @@ export function useAppState() {
                 addMessageToMessages(message_from_n8n);
             }
 
-            const reasonings = filterByName(data_as_json, "reasoning");
-            
-            // Check for glass pane reasoning first
-            const glassPaneReasoning = findGlassPaneReasoning(reasonings);
-            if (glassPaneReasoning?.value?.consideration && !loadingBlocked.current) {
-                // Update local state for immediate response
-                await updateGlassText(glassPaneReasoning.value.consideration);
-                
-                // Wait for a longer time for users to read longer texts
-                const displayTime = Math.max(3000, glassPaneReasoning.value.consideration.length * 20);
-                
-                // Automatically clear the glass pane after the calculated time
-                setTimeout(() => {
-                    updateGlassText('');
-                }, displayTime);
-            }
-            
-            // Then check for next navigation reasoning
-            const nextNavigation = findNextNavigationReasoning(reasonings);
-            if (nextNavigation?.value?.consideration && !loadingBlocked.current) {
-                
-                // Still update local state for immediate response
-                await updateGlassText(nextNavigation.value.consideration);
-                data_as_json = flushReasonings(data_as_json);
-
-                await new Promise(resolve => setTimeout(resolve, 0));
-                await sendMessage(nextNavigation?.value?.suggested);
-                // Clear the glass text after processing
-                await updateGlassText('');
-            }
+            // Note: We no longer need to process reasoning messages here
+            // as they are now handled by the WebSocket subscription in TextGlasspane.jsx
 
             return data_as_json;
         } catch (error) {
@@ -237,10 +187,7 @@ export function useAppState() {
             // Optionally, you could also set an error state here to show a dedicated error UI
         } finally {
             setLoading(false);
-            // Ensure glass text is cleared when loading is done
-            if (showGlassText) {
-                updateGlassText('');
-            }
+            // We no longer need to clear glass text here as it's handled by the WebSocket subscription
         }
     };
 
@@ -260,9 +207,6 @@ export function useAppState() {
         loadingBlocked,
         blockLoading,
         restartTokenFlow,
-        glassText,
-        showGlassText,
-        updateGlassText,
         sessionId: sessionIdRef.current
     };
 }

@@ -41,8 +41,6 @@ function App() {
         loading,
         blockLoading,
         restartTokenFlow,
-        glassText,
-        showGlassText,
         sessionId
     } = useAppState();
     
@@ -97,8 +95,6 @@ function App() {
                         </div>
                         <ChatWindow 
                             messages={messages} 
-                            glassText={glassText} 
-                            showGlassText={showGlassText}
                         />
                         <InputArea onSend={sendMessage} onNewChat={clearChat} loading={loading} blockLoading={blockLoading}/>
                     </div>

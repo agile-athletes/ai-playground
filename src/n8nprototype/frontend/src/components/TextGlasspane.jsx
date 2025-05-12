@@ -3,14 +3,14 @@ import './TextGlasspane.css';
 import { useWebSocket, getDebugMode } from './WebSocketContext';
 
 // Debug logging function
-const debugEnabled = true; // Enable debug logging temporarily
+const debugEnabled = false; // Enable debug logging temporarily
 function debugLog(...args) {
   if (debugEnabled) {
     console.log('[GlassPane Debug]', ...args);
   }
 }
 
-const TextGlasspane = ({ text, isVisible }) => {
+const TextGlasspane = () => {
   // States for animation and display
   const [displayedText, setDisplayedText] = useState('');
   const [showPane, setShowPane] = useState(false);
@@ -142,28 +142,8 @@ const TextGlasspane = ({ text, isVisible }) => {
     setCurrentConsiderationIndex(0);
   };
   
-  // Handle text from parent component
-  useEffect(() => {
-    if (text && isVisible) {
-      debugLog('Showing text from parent:', text);
-      
-      // Set up a single consideration from the parent
-      setConsiderationsQueue([text]);
-      setCurrentConsiderationIndex(0);
-      
-      // Display the text with animation
-      displayWithTypingAnimation(text);
-      
-      // Set a master timeout to ensure the glasspane always hides
-      masterHideTimerRef.current = setTimeout(() => {
-        debugLog('Master timeout triggered - ensuring glasspane is hidden');
-        hideGlasspane();
-      }, 30000); // 30 seconds max display time as a safety measure
-    } else if (!isVisible) {
-      // If parent explicitly hides it
-      hideGlasspane();
-    }
-  }, [text, isVisible]);
+  // This effect was previously used to handle text from parent component
+  // Now we rely entirely on WebSocket messages for content
   
   // Subscribe to the reasoning topic from WebSocket only in debug mode
   useEffect(() => {
@@ -283,7 +263,7 @@ const TextGlasspane = ({ text, isVisible }) => {
   }, [webSocket]);
 
   // Don't render anything if we shouldn't show the pane
-  if (!showPane && !isVisible) {
+  if (!showPane) {
     return null;
   }
 
