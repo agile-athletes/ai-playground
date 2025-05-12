@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './TextGlasspane.css';
 import { useWebSocket, getDebugMode } from './WebSocketContext';
 
@@ -29,8 +29,39 @@ const TextGlasspane = () => {
   const [considerationsQueue, setConsiderationsQueue] = useState([]);
   const [currentConsiderationIndex, setCurrentConsiderationIndex] = useState(0);
   
-  // Function to display text with a typing animation
-  const displayWithTypingAnimation = (text, index, queueLength, considerations) => {
+  // Function to clear all timers - defined first since other functions depend on it
+  const clearAllTimers = useCallback(() => {
+    if (typingTimerRef.current) {
+      clearInterval(typingTimerRef.current);
+      typingTimerRef.current = null;
+    }
+    if (displayTimerRef.current) {
+      clearTimeout(displayTimerRef.current);
+      displayTimerRef.current = null;
+    }
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+    if (masterHideTimerRef.current) {
+      clearTimeout(masterHideTimerRef.current);
+      masterHideTimerRef.current = null;
+    }
+  }, []);  // No dependencies needed as it only uses refs
+  
+  // Function to hide the glasspane - defined second since displayWithTypingAnimation depends on it
+  const hideGlasspane = useCallback(() => {
+    debugLog('Hiding glasspane');
+    clearAllTimers();
+    setShowPane(false);
+    setFadeOut(false);
+    setDisplayedText('');
+    setConsiderationsQueue([]);
+    setCurrentConsiderationIndex(0);
+  }, [clearAllTimers]);  // Include clearAllTimers as a dependency
+  
+  // Function to display text with a typing animation - defined last since it depends on hideGlasspane
+  const displayWithTypingAnimation = useCallback((text, index, queueLength, considerations) => {
     // Get the current consideration index (or use the provided index)
     const considerationIndex = index !== undefined ? index : currentConsiderationIndex;
     // Get the queue length (or use the current queue length)
@@ -94,8 +125,11 @@ const TextGlasspane = () => {
               setCurrentConsiderationIndex(nextIndex);
               setFadeOut(false);
               
-              // Display the next consideration
-              displayWithTypingAnimation(nextText, nextIndex, totalConsiderations, considerationsArray);
+              // Display the next consideration - use a setTimeout to break the synchronous call chain
+              // This ensures state updates have time to propagate
+              setTimeout(() => {
+                displayWithTypingAnimation(nextText, nextIndex, totalConsiderations, considerationsArray);
+              }, 0);
             } else {
               // No more considerations or next text is missing, hide the glasspane
               debugLog(`No more considerations after ${considerationIndex + 1}/${totalConsiderations}, hiding glasspane`);
@@ -109,41 +143,8 @@ const TextGlasspane = () => {
         }, readingTime);
       }
     }, 30); // Speed of character appearance
-  };
-  
-  // Function to clear all timers
-  const clearAllTimers = () => {
-    if (typingTimerRef.current) {
-      clearInterval(typingTimerRef.current);
-      typingTimerRef.current = null;
-    }
-    if (displayTimerRef.current) {
-      clearTimeout(displayTimerRef.current);
-      displayTimerRef.current = null;
-    }
-    if (hideTimerRef.current) {
-      clearTimeout(hideTimerRef.current);
-      hideTimerRef.current = null;
-    }
-    if (masterHideTimerRef.current) {
-      clearTimeout(masterHideTimerRef.current);
-      masterHideTimerRef.current = null;
-    }
-  };
-  
-  // Function to hide the glasspane
-  const hideGlasspane = () => {
-    debugLog('Hiding glasspane');
-    clearAllTimers();
-    setShowPane(false);
-    setFadeOut(false);
-    setDisplayedText('');
-    setConsiderationsQueue([]);
-    setCurrentConsiderationIndex(0);
-  };
-  
-  // This effect was previously used to handle text from parent component
-  // Now we rely entirely on WebSocket messages for content
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [considerationsQueue, currentConsiderationIndex, hideGlasspane]);  // Include hideGlasspane as a dependency
   
   // Subscribe to the reasoning topic from WebSocket only in debug mode
   useEffect(() => {
@@ -260,7 +261,10 @@ const TextGlasspane = () => {
         unsubscribe();
       }
     };
-  }, [webSocket]);
+    // Now that displayWithTypingAnimation and hideGlasspane are wrapped in useCallback,
+    // they won't change between renders unless their dependencies change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [webSocket, displayWithTypingAnimation, hideGlasspane]);
 
   // Don't render anything if we shouldn't show the pane
   if (!showPane) {
