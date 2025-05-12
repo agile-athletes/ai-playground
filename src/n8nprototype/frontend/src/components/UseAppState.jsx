@@ -107,6 +107,9 @@ export function useAppState() {
                 if (window.webSocketInstance && !webSocketContext.current) {
                     webSocketContext.current = window.webSocketInstance;
                     clearInterval(checkInterval);
+                    
+                    // Once we have the WebSocket context, set up the attentions subscription
+                    setupAttentionsSubscription();
                 }
             }, 1000);
             
@@ -114,78 +117,122 @@ export function useAppState() {
             return () => clearInterval(checkInterval);
         }
     }, [step]);
+    
+    // Function to set up subscription to attentions topic
+    const setupAttentionsSubscription = () => {
+        if (!webSocketContext.current?.subscribe) {
+            console.warn('WebSocket subscribe method not available for attentions');
+            return;
+        }
+        
+        console.log('Setting up attentions subscription');
+        
+        // Subscribe to the attentions topic
+        return webSocketContext.current.subscribe('attentions', (payload) => {
+            console.log('Received attentions via WebSocket:', payload);
+            
+            // Process attentions from different message formats
+            let attentions = [];
+            
+            // Format 1: Direct attentions array
+            if (Array.isArray(payload)) {
+                attentions = payload;
+            }
+            // Format 2: Attentions in a property
+            else if (payload && Array.isArray(payload.attentions)) {
+                attentions = payload.attentions;
+            }
+            // Format 3: Single attention object
+            else if (payload && payload.id && payload.name && payload.value) {
+                attentions = [payload];
+            }
+            
+            // Process attentions if we found any
+            if (attentions.length > 0) {
+                // Convert to markdown and add to messages
+                const data_as_markdown = new JsonToMarkdownConverter(attentions).toMarkdown();
+                const message_from_n8n = { role: 'system', content: data_as_markdown };
+                addMessageToMessages(message_from_n8n);
+            }
+        });
+    };
+    
+    // We don't need a separate useEffect for attentions subscription anymore
+    // as we're setting it up in the WebSocket initialization effect
 
-    const sendMessage = async (userContent) => {
+    const sendMessage = (userContent) => {
         if (loadingBlocked.current) {
             return;
         }
+        
+        // Add user message to the chat immediately if provided
+        if (userContent) {
+            addMessageToMessages({ role: 'user', content: userContent });
+        }
+        
+        // Set loading state
         setLoading(true);
         loadingBlocked.current = false;
 
-        try {
-            // Add user message to the chat if provided
-            if (userContent) {
-                addMessageToMessages({ role: 'user', content: userContent });
-            }
+        // Prepare the messages to send to the backend
+        const toUpdateMessages = {
+            messages: getMessages(),
+        };
 
-            // Prepare the messages to send to the backend
-            const toUpdateMessages = {
-                messages: getMessages(),
-            };
+        // Get the correct webhook URL based on the current workflow
+        const webhookUrl = getWorkflowUrl();
 
-            // Get the correct webhook URL based on the current workflow
-            const webhookUrl = getWorkflowUrl();
-
-            // Send the request to the backend
-            const response = await fetch(webhookUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': makeJwtToken(),
-                },
-                body: JSON.stringify(toUpdateMessages),
-            });
-
+        // Process the API request in the background
+        // Note: We're not using await here to avoid blocking the UI
+        fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': makeJwtToken(),
+            },
+            body: JSON.stringify(toUpdateMessages),
+        })
+        .then(response => {
             // Check status before attempting to parse JSON
             if (response.status === 401 || response.status === 403) {
                 // If backend signals a token-related issue, restart the flow.
                 restartTokenFlow();
-                return;
+                throw new Error('Authentication error');
             }
-
-            const data_as_json = await response.json();
-
-            // Extract data from response and update local state
+            return response.json();
+        })
+        .then(data_as_json => {
+            // Extract workflows from response and update local state
             const workflowsToAppend = filterByName(data_as_json, "workflows");
             if (Array.isArray(workflowsToAppend) && workflowsToAppend.length > 0) {
                 // Update local state
                 appendWorkflowsToWorkflows(workflowsToAppend);
             }
-
-            const attentions = filterByName(data_as_json, "attentions");
-            if (Array.isArray(attentions) && attentions.length > 0) {
-                // Update local state
-                const data_as_markdown = new JsonToMarkdownConverter(attentions).toMarkdown();
-                const message_from_n8n = { role: 'system', content: data_as_markdown };
-                addMessageToMessages(message_from_n8n);
-            }
+            
+            // Note: We no longer process attentions here as they are handled by the WebSocket subscription
 
             // Note: We no longer need to process reasoning messages here
             // as they are now handled by the WebSocket subscription in TextGlasspane.jsx
-
+            
             return data_as_json;
-        } catch (error) {
-            // Update the UI with an error message instead of throwing the error
-            addMessageToMessages({
-                role: 'system',
-                content:
-                    'Error: Could not send message. Please check your connection or try again later.',
-            });
+        })
+        .catch(error => {
+            // Only show error message if it's not an authentication error
+            if (error.message !== 'Authentication error') {
+                // Update the UI with an error message
+                addMessageToMessages({
+                    role: 'system',
+                    content:
+                        'Error: Could not send message. Please check your connection or try again later.',
+                });
+            }
             // Optionally, you could also set an error state here to show a dedicated error UI
-        } finally {
+            console.error('Error in sendMessage:', error);
+        })
+        .finally(() => {
             setLoading(false);
             // We no longer need to clear glass text here as it's handled by the WebSocket subscription
-        }
+        });
     };
 
     return { 

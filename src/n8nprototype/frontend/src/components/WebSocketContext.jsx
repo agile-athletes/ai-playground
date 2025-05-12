@@ -6,7 +6,7 @@ import mqtt from 'mqtt';
 // This ensures we have only one instance across the entire application
 let mqttClient = null;
 let isConnected = false;
-let topicCallbacks = { reasoning: new Map() };
+let topicCallbacks = { reasoning: new Map(), navigation: new Map(), attentions: new Map() };
 let subscribedTopics = new Set(); // Track subscribed topics at module level
 let initializationInProgress = false; // Prevent concurrent initialization
 let debugMode = true; // Set to true to enable detailed logging
