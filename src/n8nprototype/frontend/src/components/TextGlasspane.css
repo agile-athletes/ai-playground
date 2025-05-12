@@ -9,7 +9,7 @@
   align-items: center;
   background-color: rgba(0, 0, 0, 0.6);
   z-index: 900;
-  pointer-events: none; /* Allow clicks to pass through */
+  pointer-events: auto; /* Enable click events on the glasspane */
   opacity: 1;
   transition: opacity 0.5s ease-out;
 }

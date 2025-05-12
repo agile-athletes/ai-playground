@@ -288,7 +288,11 @@ const TextGlasspane = ({ text, isVisible }) => {
   }
 
   return (
-    <div className={`text-glasspane ${fadeOut ? 'fade-out' : ''}`}>
+    <div 
+      className={`text-glasspane ${fadeOut ? 'fade-out' : ''}`}
+      onClick={hideGlasspane}
+      onTouchEnd={hideGlasspane}
+    >
       <div className="text-glasspane-content">
         <p className="trickling-text">{displayedText}</p>
       </div>
