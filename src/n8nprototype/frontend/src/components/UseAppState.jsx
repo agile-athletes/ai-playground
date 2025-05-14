@@ -23,6 +23,7 @@ export function useAppState() {
     // For testing, we can start in authenticated mode
     const [step, setStep] = useState('email'); // TODO 'email', 'token', 'authenticated'
     // Use test token for MQTT connection
+    const [jwtToken, setJwtToken] = useState([{"token":""}])
 
     const [userEmail, setUserEmail] = useState('');
     const [loading, setLoading] = useState(false);
