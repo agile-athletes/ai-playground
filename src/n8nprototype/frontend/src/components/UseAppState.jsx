@@ -21,9 +21,8 @@ export function useAppState() {
     const [ workflowVersion, setWorkflowsVersion] = useState(0);
 
     // For testing, we can start in authenticated mode
-    const [step, setStep] = useState('authenticated'); // TODO 'email', 'token', 'authenticated'
+    const [step, setStep] = useState('email'); // TODO 'email', 'token', 'authenticated'
     // Use test token for MQTT connection
-    const [jwtToken, setJwtToken] = useState([{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NDY5NDYzOTUuNzE4NTY0LCJleHAiOjE3NDg2NzQzOTUuNzE4NTY0LCJ1c2VyX2lkIjoidXNlckBleGFtcGxlLmNvbSJ9.kcs665-fbXIBisx0xkc9HuYdTXg0xHpV4KNK6TxvTMo"}])
 
     const [userEmail, setUserEmail] = useState('');
     const [loading, setLoading] = useState(false);
@@ -116,6 +115,7 @@ export function useAppState() {
             // Clean up interval on unmount
             return () => clearInterval(checkInterval);
         }
+        // eslint-disable-next-line
     }, [step]);
     
     // Function to set up subscription to attentions topic
