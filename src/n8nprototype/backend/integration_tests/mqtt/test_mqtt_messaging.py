@@ -117,7 +117,7 @@ class TestMqttMessaging(unittest.TestCase):
         payload = {
             "iat": now.timestamp(),                # Issued at
             "exp": expiration.timestamp(),         # Expiration time
-            "user_id": "dinesh@agile-athletes.de"  # Custom claim: user ID for happy flow
+            "user_id": "user@example.com"  # Custom claim: user ID for happy flow
         }
         
         # Get the secret key from environment variables
