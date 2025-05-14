@@ -29,7 +29,7 @@ export const getBaseUrl = () => {
   const port = '5678';
   
   // Construct the base URL using the current hostname
-  return `http://${hostname}:${port}`;
+  return `https://${hostname}:${port}`;
 };
 
 // Get the full webhook URL with the specified path
