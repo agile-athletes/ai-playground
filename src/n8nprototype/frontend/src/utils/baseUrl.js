@@ -1,6 +1,7 @@
 /**
- * Utility to get the base URL for backend API calls at runtime
- * This replaces hardcoded localhost references with the current hostname
+ * Utility to provide URLs for the application
+ * The app runs on https://ai-playground.agile-athletes.de/
+ * The webhook URL is https://n8n.agile-athletes.de/webhook/
  */
 
 // Check if test mode is enabled via URL parameter
@@ -11,36 +12,28 @@ export const isTestMode = () => {
 
 // Get the base URL for backend API calls
 export const getBaseUrl = () => {
-  // Check if a backend parameter is provided in the URL
+  // For local development, check if a backend parameter is provided in the URL
   const urlParams = new URLSearchParams(window.location.search);
   const backendParam = urlParams.get('backend');
   
-  // If backend parameter is provided, use it directly
   if (backendParam) {
-    // The backend parameter might be URL encoded, so decode it
     return decodeURIComponent(backendParam);
   }
   
-  // Otherwise, use the default logic with current hostname
-  // Get the current hostname (e.g., localhost, example.com, etc.)
-  const hostname = window.location.hostname;
-  
-  // n8n backend port locally
-  const port = '5678';
-  
-  // Construct the base URL using the current hostname
-  return `https://${hostname}:${port}`;
+  // In production, use the n8n subdomain
+  return 'https://n8n.agile-athletes.de';
 };
 
 // Get the full webhook URL with the specified path
 export const getWebhookUrl = (path) => {
-  const baseUrl = getBaseUrl();
-  // Ensure baseUrl ends with a slash before appending webhook path
-  const baseWithSlash = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  // Always use the fixed webhook URL
+  const webhookBase = 'https://n8n.agile-athletes.de/webhook';
   
-  // Determine if we should use the test webhook endpoint
-  const webhookPrefix = isTestMode() ? 'webhook-test' : 'webhook';
+  // Append the path if provided
+  if (path) {
+    return `${webhookBase}/${path}`;
+  }
   
-  return `${baseWithSlash}${webhookPrefix}/${path}`;
+  return `${webhookBase}/`;
 };
 
