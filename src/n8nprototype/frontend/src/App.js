@@ -41,7 +41,8 @@ function App() {
         loading,
         blockLoading,
         restartTokenFlow,
-        sessionId
+        sessionId,
+        toggleDebugMode // Add the debug toggle function
     } = useAppState();
     
     // Track WebSocket connection status
@@ -88,7 +89,6 @@ function App() {
             {step === 'token' && <TokenForm email={userEmail} onVerified={handleTokenVerified} onRestart={restartTokenFlow} />}
             {step === 'authenticated' && (
             <>
-            {console.log('Rendering authenticated state, token:', jwtToken)}
             {jwtToken && jwtToken[0] && jwtToken[0].token ? (
               <WebSocketProvider authToken={jwtToken[0].token} sessionId={sessionId}>
                 <WebSocketStatusUpdater setWsConnected={setWsConnected} />

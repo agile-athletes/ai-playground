@@ -5,9 +5,13 @@ import {
 } from "./helpers/experiments";
 import {JsonToMarkdownConverter} from "./helpers/json_to_markdown";
 import { getWebhookUrl } from "../utils/baseUrl";
+import { setDebugMode as setMqttDebugMode } from "./WebSocketContext";
 
 // Remove 'webhook/' from these constants as getWebhookUrl already adds that prefix
 const EXPLAINER_URL = 'explainer'; // Select explainer when the user hits the first workflow
+
+// Debug mode control
+let appDebugMode = false;
 
 export function useAppState() {
     // We'll use a ref to store the WebSocket context once it's available
@@ -95,12 +99,28 @@ export function useAppState() {
     };
 
     const makeJwtToken = () => {
-        console.log('makeJwtToken called, jwtToken:', jwtToken);
         if (!jwtToken || !jwtToken[0] || !jwtToken[0].token) {
             console.error('JWT token is not properly set:', jwtToken);
             return 'Bearer ';
         }
         return `Bearer ${jwtToken[0].token}`;
+    }
+    
+    // Function to toggle debug mode for the app and MQTT
+    const toggleDebugMode = (enabled) => {
+        if (enabled === undefined) {
+            // Toggle if no value provided
+            appDebugMode = !appDebugMode;
+        } else {
+            // Set to specific value if provided
+            appDebugMode = enabled;
+        }
+        
+        // Also set MQTT debug mode to match
+        setMqttDebugMode(appDebugMode);
+        
+        console.log(`[App] Debug mode ${appDebugMode ? 'enabled' : 'disabled'}`);
+        return appDebugMode;
     }
     
     // Initialize WebSocket connections when authenticated
@@ -221,13 +241,8 @@ export function useAppState() {
         // Get the correct webhook URL based on the current workflow
         const webhookUrl = getWorkflowUrl();
         
-        // Debug authentication state
-        console.log('sendMessage - Current step:', step);
-        console.log('sendMessage - JWT token:', jwtToken);
-        
         // Create authorization header
-        const authHeader = makeJwtToken();
-        console.log('sendMessage - Authorization header (partial):', authHeader.substring(0, 15) + '...');
+        makeJwtToken();
 
         // Process the API request in the background
         // Note: We're not using await here to avoid blocking the UI
@@ -267,7 +282,7 @@ export function useAppState() {
                 });
             }
             // Optionally, you could also set an error state here to show a dedicated error UI
-            console.error('Error in sendMessage:', error);
+            // Error handled in the catch block above
         })
         .finally(() => {
             setLoading(false);
@@ -291,6 +306,7 @@ export function useAppState() {
         loadingBlocked,
         blockLoading,
         restartTokenFlow,
-        sessionId: sessionIdRef.current
+        sessionId: sessionIdRef.current,
+        toggleDebugMode // Expose the debug toggle function
     };
 }

@@ -9,7 +9,7 @@ let isConnected = false;
 let topicCallbacks = { reasoning: new Map(), workflows: new Map(), attentions: new Map() };
 let subscribedTopics = new Set(); // Track subscribed topics at module level
 let initializationInProgress = false; // Prevent concurrent initialization
-let debugMode = true; // Set to true to enable detailed logging
+let debugMode = false; // Default to false for production
 
 // Debug logging function
 function debugLog(...args) {
@@ -20,6 +20,12 @@ function debugLog(...args) {
 
 // Function to get the current debug mode
 function getDebugMode() {
+    return debugMode;
+}
+
+// Function to set debug mode
+function setDebugMode(enabled) {
+    debugMode = enabled;
     return debugMode;
 }
 
@@ -64,16 +70,13 @@ function initializeMqttClient(authToken, sessionId, onConnect, onDisconnect, onE
         debugLog(`Using MQTT server: ${WS_BASE_URL}`);
         
         // Create connection URL with auth token
-        console.log('initializeMqttClient - authToken:', authToken);
         if (!authToken) {
-            console.error('initializeMqttClient - authToken is undefined or empty');
             onError('Authentication token is missing');
             initializationInProgress = false;
             return;
         }
         
         const urlWithParams = `${WS_BASE_URL}?auth=Bearer ${authToken}${sessionId ? `&session_id=${sessionId}` : ''}`;
-        console.log('MQTT connection URL (partial for security):', `${WS_BASE_URL}?auth=Bearer ${authToken.substring(0, 10)}...`);
         debugLog(`Connecting to MQTT server: ${WS_BASE_URL}`);
         
         // Create client with stable ID - use the sessionId for consistency
@@ -91,8 +94,6 @@ function initializeMqttClient(authToken, sessionId, onConnect, onDisconnect, onE
         
         // Set up event handlers
         mqttClient.on('connect', () => {
-            console.log('MQTT client connected to server');
-            debugLog(`MQTT client connected with ID: ${clientId}`);
             isConnected = true;
             initializationInProgress = false; // Reset initialization flag
             
@@ -187,11 +188,7 @@ export function WebSocketProvider({ children, authToken, sessionId }) {
     
     // Initialize connection on mount or when auth changes
     useEffect(() => {
-        console.log('WebSocketProvider useEffect - authToken:', authToken);
-        console.log('WebSocketProvider useEffect - sessionId:', sessionId);
-        
         if (!authToken) {
-            console.warn('WebSocketProvider: No authToken provided, skipping initialization');
             return;
         }
         
@@ -228,14 +225,8 @@ export function WebSocketProvider({ children, authToken, sessionId }) {
         // Subscribe to the topic
         mqttClient.subscribe(topic, { qos: 1 }, (err) => {
             if (err) {
-                console.error(`Error subscribing to topic ${topic}:`, err);
-                debugLog(`Error subscribing to topic ${topic}:`, err);
                 // Remove from subscribed topics if there was an error
                 subscribedTopics.delete(topic);
-            } else {
-                // Only log to console once per topic
-                console.log(`Subscribed to topic: ${topic}`);
-                debugLog(`Successfully subscribed to topic: ${topic}`);
             }
         });
         
@@ -246,7 +237,6 @@ export function WebSocketProvider({ children, authToken, sessionId }) {
     const subscribe = (topic, callback) => {
         // Validate topic
         if (!topicCallbacks[topic]) {
-            console.error(`Invalid topic: ${topic}`);
             return () => {};
         }
         
@@ -291,5 +281,5 @@ export function useWebSocket() {
     return context;
 }
 
-// Export the debug mode getter
-export { getDebugMode };
+// Export the debug mode getter and setter
+export { getDebugMode, setDebugMode };
