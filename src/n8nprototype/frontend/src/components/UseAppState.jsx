@@ -150,9 +150,7 @@ export function useAppState() {
             console.warn('WebSocket subscribe method not available for attentions');
             return;
         }
-        
-        console.log('Setting up attentions subscription');
-        
+
         // Subscribe to the attentions topic
         return webSocketContext.current.subscribe('attentions', (payload) => {
             console.log('Received attentions via WebSocket:', payload);
@@ -189,8 +187,6 @@ export function useAppState() {
             console.warn('WebSocket subscribe method not available for workflows');
             return;
         }
-        
-        console.log('Setting up workflows subscription');
         
         // Subscribe to the workflows topic
         return webSocketContext.current.subscribe('workflows', (payload) => {
