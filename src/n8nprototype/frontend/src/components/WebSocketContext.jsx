@@ -60,11 +60,20 @@ function initializeMqttClient(authToken, sessionId, onConnect, onDisconnect, onE
     
     try {
         // Use the same MQTT server for both localhost and production
-        const WS_BASE_URL = process.env.REACT_APP_WS_URL || 'wss://mqtt.agile-athletes.de';
+        const WS_BASE_URL = process.env.REACT_APP_WS_URL || 'wss://ai.agile-athletes.de/mqtt';
         debugLog(`Using MQTT server: ${WS_BASE_URL}`);
         
         // Create connection URL with auth token
+        console.log('initializeMqttClient - authToken:', authToken);
+        if (!authToken) {
+            console.error('initializeMqttClient - authToken is undefined or empty');
+            onError('Authentication token is missing');
+            initializationInProgress = false;
+            return;
+        }
+        
         const urlWithParams = `${WS_BASE_URL}?auth=Bearer ${authToken}${sessionId ? `&session_id=${sessionId}` : ''}`;
+        console.log('MQTT connection URL (partial for security):', `${WS_BASE_URL}?auth=Bearer ${authToken.substring(0, 10)}...`);
         debugLog(`Connecting to MQTT server: ${WS_BASE_URL}`);
         
         // Create client with stable ID - use the sessionId for consistency
@@ -178,7 +187,13 @@ export function WebSocketProvider({ children, authToken, sessionId }) {
     
     // Initialize connection on mount or when auth changes
     useEffect(() => {
-        if (!authToken) return;
+        console.log('WebSocketProvider useEffect - authToken:', authToken);
+        console.log('WebSocketProvider useEffect - sessionId:', sessionId);
+        
+        if (!authToken) {
+            console.warn('WebSocketProvider: No authToken provided, skipping initialization');
+            return;
+        }
         
         // Initialize the client
         initializeMqttClient(

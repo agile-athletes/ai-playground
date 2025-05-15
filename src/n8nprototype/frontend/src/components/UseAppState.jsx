@@ -95,7 +95,12 @@ export function useAppState() {
     };
 
     const makeJwtToken = () => {
-        return `Bearer ${jwtToken}`;
+        console.log('makeJwtToken called, jwtToken:', jwtToken);
+        if (!jwtToken || !jwtToken[0] || !jwtToken[0].token) {
+            console.error('JWT token is not properly set:', jwtToken);
+            return 'Bearer ';
+        }
+        return `Bearer ${jwtToken[0].token}`;
     }
     
     // Initialize WebSocket connections when authenticated
@@ -215,6 +220,14 @@ export function useAppState() {
 
         // Get the correct webhook URL based on the current workflow
         const webhookUrl = getWorkflowUrl();
+        
+        // Debug authentication state
+        console.log('sendMessage - Current step:', step);
+        console.log('sendMessage - JWT token:', jwtToken);
+        
+        // Create authorization header
+        const authHeader = makeJwtToken();
+        console.log('sendMessage - Authorization header (partial):', authHeader.substring(0, 15) + '...');
 
         // Process the API request in the background
         // Note: We're not using await here to avoid blocking the UI

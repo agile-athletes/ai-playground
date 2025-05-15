@@ -76,8 +76,10 @@ function App() {
     };
 
     const handleTokenVerified = (response) => {
+        console.log('Token verified, response:', response);
         setStep('authenticated');
-        setJwtToken(response[0].token);
+        setJwtToken(response); // The response is already in the correct format [{ token: '...' }]
+        console.log('Authentication state set to authenticated');
     };
 
     return (
@@ -85,7 +87,10 @@ function App() {
             {step === 'email' && <EmailForm onSuccess={handleEmailSuccess} onRestart={restartTokenFlow} />}
             {step === 'token' && <TokenForm email={userEmail} onVerified={handleTokenVerified} onRestart={restartTokenFlow} />}
             {step === 'authenticated' && (
-            <WebSocketProvider authToken={jwtToken[0].token} sessionId={sessionId}>
+            <>
+            {console.log('Rendering authenticated state, token:', jwtToken)}
+            {jwtToken && jwtToken[0] && jwtToken[0].token ? (
+              <WebSocketProvider authToken={jwtToken[0].token} sessionId={sessionId}>
                 <WebSocketStatusUpdater setWsConnected={setWsConnected} />
                 <div className="app-wrapper">
                     <NavigationLeft workflows={workflows} selectWorkflow={selectWorkflow}/>
@@ -101,6 +106,10 @@ function App() {
                     <div className="right-sidebar"></div>
                 </div>
             </WebSocketProvider>
+            ) : (
+              <div>Authentication token not available. Please try logging in again.</div>
+            )}
+            </>
             )}
         </div>
     );
