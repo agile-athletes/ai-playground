@@ -1,13 +1,20 @@
 /**
  * Utility to provide URLs for the application
- * The app runs on https://ai-playground.agile-athletes.de/
- * The webhook URL is https://n8n.agile-athletes.de/webhook/
+ * The app runs on https://ai-playground.agile-athletes.de/ in production
+ * For localhost testing, we use different endpoints
  */
+
+// Check if we're running on localhost
+export const isLocalhost = () => {
+  return window.location.hostname === 'localhost' || 
+         window.location.hostname === '127.0.0.1' ||
+         window.location.hostname.includes('192.168.');
+};
 
 // Check if test mode is enabled via URL parameter
 export const isTestMode = () => {
   const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('test') === 'true';
+  return urlParams.get('test') === 'true' || isLocalhost();
 };
 
 // Get the base URL for backend API calls
@@ -20,20 +27,26 @@ export const getBaseUrl = () => {
     return decodeURIComponent(backendParam);
   }
   
-  // In production, use the n8n subdomain
+  // Both on localhost and in production, we use the same n8n backend
   return 'https://n8n.agile-athletes.de';
 };
 
 // Get the full webhook URL with the specified path
 export const getWebhookUrl = (path) => {
-  // Always use the fixed webhook URL
-  const webhookBase = 'https://n8n.agile-athletes.de/webhook';
+  // Get the base webhook URL based on environment
+  const webhookBase = `${getBaseUrl()}/webhook`;
   
-  // Append the path if provided
-  if (path) {
-    return `${webhookBase}/${path}`;
+  // If no path provided, return the base webhook URL
+  if (!path) {
+    return `${webhookBase}/`;
   }
   
-  return `${webhookBase}/`;
+  // For localhost/test mode, prepend 'test-' to the path
+  if (isLocalhost()) {
+    return `${webhookBase}/test-${path}`;
+  }
+  
+  // For production, use the regular path
+  return `${webhookBase}/${path}`;
 };
 

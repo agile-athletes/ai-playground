@@ -59,9 +59,13 @@ function initializeMqttClient(authToken, sessionId, onConnect, onDisconnect, onE
     }
     
     try {
+        // Use the same MQTT server for both localhost and production
+        const WS_BASE_URL = process.env.REACT_APP_WS_URL || 'wss://mqtt.agile-athletes.de';
+        debugLog(`Using MQTT server: ${WS_BASE_URL}`);
+        
         // Create connection URL with auth token
-        const WS_BASE_URL = process.env.REACT_APP_WS_URL || 'wss://ai.agile-athletes.de/mqtt';
         const urlWithParams = `${WS_BASE_URL}?auth=Bearer ${authToken}${sessionId ? `&session_id=${sessionId}` : ''}`;
+        debugLog(`Connecting to MQTT server: ${WS_BASE_URL}`);
         
         // Create client with stable ID - use the sessionId for consistency
         const clientId = `mqtt_${sessionId || Date.now()}`;

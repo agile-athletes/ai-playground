@@ -1,4 +1,15 @@
+import { getWebhookUrl, isLocalhost } from "../../utils/baseUrl";
+
 export function workflowSelectionSample() {
+    // Determine the appropriate URLs based on environment
+    const workflow2Url = isLocalhost() ? 
+        getWebhookUrl('workflow-2') : 
+        getWebhookUrl('workflow-2');
+    
+    const workflow3Url = isLocalhost() ? 
+        getWebhookUrl('workflow-3') : 
+        getWebhookUrl('workflow-3');
+        
     return {
         "attentions": [
             {
@@ -31,7 +42,7 @@ export function workflowSelectionSample() {
                     "type": "workflow",
                     "label": "SOFT Validation",
                     "selected": false,
-                    "url": "http://localhost:5678/webhook/workflow-2"
+                    "url": workflow2Url
                 },
                 "weight": "0.7",
                 "parent_id": null
@@ -43,7 +54,7 @@ export function workflowSelectionSample() {
                     "type": "workflow",
                     "label": "One Level deeper",
                     "selected": false,
-                    "url": "http://localhost:5678/webhook/workflow-3"
+                    "url": workflow3Url
                 },
                 "weight": "0.7",
                 "parent_id": null
