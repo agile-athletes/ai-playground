@@ -41,8 +41,7 @@ function App() {
         loading,
         blockLoading,
         restartTokenFlow,
-        sessionId,
-        toggleDebugMode // Add the debug toggle function
+        sessionId
     } = useAppState();
     
     // Track WebSocket connection status

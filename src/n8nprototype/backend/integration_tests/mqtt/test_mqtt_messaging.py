@@ -329,7 +329,9 @@ class TestMqttMessaging(unittest.TestCase):
                 if topic == "reasoning":
                     test_message = {
                         "consideration": f"Test reasoning message from integration test at {datetime.datetime.utcnow().isoformat()}",
-                        "type": "glasspane"
+                        "type": "glasspane",
+                        "is_test": True,  # Add a special flag for tests
+                        "auto_close": True  # Signal that this message should auto-close
                     }
                 elif topic == "workflows":
                     test_message = [
