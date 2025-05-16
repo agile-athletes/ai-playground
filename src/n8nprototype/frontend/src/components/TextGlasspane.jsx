@@ -3,14 +3,14 @@ import './TextGlasspane.css';
 import { useWebSocket, getDebugMode } from './WebSocketContext';
 
 // Debug logging function
-const debugEnabled = false; // Enable debug logging temporarily
+const debugEnabled = true; // Enable debug logging
 function debugLog(...args) {
   if (debugEnabled) {
     console.log('[GlassPane Debug]', ...args);
   }
 }
 
-const TextGlasspane = () => {
+const TextGlasspane = ({ sessionId }) => {
   // States for animation and display
   const [displayedText, setDisplayedText] = useState('');
   const [showPane, setShowPane] = useState(false);
@@ -146,21 +146,22 @@ const TextGlasspane = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [considerationsQueue, currentConsiderationIndex, hideGlasspane]);  // Include hideGlasspane as a dependency
   
-  // Subscribe to the reasoning topic from WebSocket only in debug mode
+  // Subscribe to the reasoning topic from WebSocket
   useEffect(() => {
-    // Check if we should subscribe based on debug mode
-    if (!getDebugMode()) {
-      // Skip subscription when not in debug mode
-      return;
-    }
-    
     if (!webSocket?.subscribe) {
       console.warn('WebSocket subscribe method not available');
       return;
     }
     
-    // Subscribe to the reasoning topic
-    const unsubscribe = webSocket.subscribe('reasoning', (payload) => {
+    // Determine topic name based on debug mode
+    // In debug mode: use base topic for all sessions to share data
+    // In normal mode: use session-specific topic to isolate data
+    const isDebugMode = getDebugMode();
+    const topicName = isDebugMode ? 'reasoning' : `reasoning/${sessionId}`;
+    console.log(`Subscribing to ${topicName} topic (debug mode: ${isDebugMode ? 'enabled' : 'disabled'})`);
+    
+    // Subscribe to the appropriate reasoning topic
+    const unsubscribe = webSocket.subscribe(topicName, (payload) => {
       // Log all incoming messages for debugging
       debugLog('TextGlasspane received message:', payload);
       
@@ -264,7 +265,7 @@ const TextGlasspane = () => {
     // Now that displayWithTypingAnimation and hideGlasspane are wrapped in useCallback,
     // they won't change between renders unless their dependencies change
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [webSocket, displayWithTypingAnimation, hideGlasspane]);
+  }, [webSocket, displayWithTypingAnimation, hideGlasspane, sessionId]);
 
   // Don't render anything if we shouldn't show the pane
   if (!showPane) {

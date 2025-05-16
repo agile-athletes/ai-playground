@@ -3,7 +3,7 @@ import ChatMessage from './ChatMessage';
 import TextGlasspane from './TextGlasspane';
 import './ChatWindow.css';
 
-const ChatWindow = ({ messages }) => {
+const ChatWindow = ({ messages, sessionId }) => {
     const chatEndRef = useRef(null);
 
     // Scroll to the bottom whenever messages update.
@@ -17,7 +17,7 @@ const ChatWindow = ({ messages }) => {
                 <ChatMessage key={index} message={message} />
             ))}
             <div ref={chatEndRef} />
-            <TextGlasspane />
+            <TextGlasspane sessionId={sessionId} />
         </div>
     );
 };

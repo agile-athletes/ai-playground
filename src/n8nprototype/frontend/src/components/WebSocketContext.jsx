@@ -9,7 +9,7 @@ let isConnected = false;
 let topicCallbacks = { reasoning: new Map(), workflows: new Map(), attentions: new Map() };
 let subscribedTopics = new Set(); // Track subscribed topics at module level
 let initializationInProgress = false; // Prevent concurrent initialization
-let debugMode = false; // Default to false for production
+let debugMode = true; // Default to true for now to show reasoning and attentions
 
 // Debug logging function
 function debugLog(...args) {

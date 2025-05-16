@@ -11,7 +11,7 @@ import { setDebugMode as setMqttDebugMode } from "./WebSocketContext";
 const EXPLAINER_URL = 'explainer'; // Select explainer when the user hits the first workflow
 
 // Debug mode control
-let appDebugMode = false;
+let appDebugMode = true; // Set to true by default to show reasoning and attentions
 
 export function useAppState() {
     // We'll use a ref to store the WebSocket context once it's available
@@ -150,9 +150,15 @@ export function useAppState() {
             console.warn('WebSocket subscribe method not available for attentions');
             return;
         }
+        
+        // Determine topic name based on debug mode
+        // In debug mode: use base topic for all sessions to share data
+        // In normal mode: use session-specific topic to isolate data
+        const topicName = appDebugMode ? 'attentions' : `attentions/${sessionIdRef.current}`;
+        console.log(`Subscribing to ${topicName} topic (debug mode: ${appDebugMode ? 'enabled' : 'disabled'})`);
 
-        // Subscribe to the attentions topic
-        return webSocketContext.current.subscribe('attentions', (payload) => {
+        // Subscribe to the appropriate attentions topic
+        return webSocketContext.current.subscribe(topicName, (payload) => {
             console.log('Received attentions via WebSocket:', payload);
             
             // Process attentions from different message formats
@@ -188,8 +194,14 @@ export function useAppState() {
             return;
         }
         
-        // Subscribe to the workflows topic
-        return webSocketContext.current.subscribe('workflows', (payload) => {
+        // Determine topic name based on debug mode
+        // In debug mode: use base topic for all sessions to share data
+        // In normal mode: use session-specific topic to isolate data
+        const topicName = appDebugMode ? 'workflows' : `workflows/${sessionIdRef.current}`;
+        console.log(`Subscribing to ${topicName} topic (debug mode: ${appDebugMode ? 'enabled' : 'disabled'})`);
+        
+        // Subscribe to the appropriate workflows topic
+        return webSocketContext.current.subscribe(topicName, (payload) => {
             console.log('Received workflows via WebSocket:', payload);
             
             // Process workflows from different message formats
