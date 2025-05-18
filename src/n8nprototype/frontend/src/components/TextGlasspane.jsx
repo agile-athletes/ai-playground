@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './TextGlasspane.css';
 import { useWebSocket } from './WebSocketContext';
 import messageLogic from './helpers/message_reasoning_logic';
