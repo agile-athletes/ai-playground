@@ -1,7 +1,7 @@
 /* Container styling for both forms */
 .form-container {
     max-width: 400px;
-    margin: 2rem auto;
+    margin: 0 auto;
     padding: 2rem;
     background: #ffffff;
     border: 1px solid #ddd;
@@ -9,6 +9,9 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     text-align: center;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    position: relative;
+    top: 33vh; /* Position the form 1/3 down the page */
+    transform: translateY(-50%); /* Adjust for the form's height */
 }
 
 /* Header styling */
@@ -58,4 +61,6 @@ body {
     background: linear-gradient(135deg, #f6f9fc, #e9eff5);
     margin: 0;
     padding: 0;
+    overflow: hidden; /* Prevent scrollbar from appearing */
+    height: 100vh; /* Ensure full height */
 }
