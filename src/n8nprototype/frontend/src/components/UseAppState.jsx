@@ -6,6 +6,7 @@ import {
 import {JsonToMarkdownConverter} from "./helpers/json_to_markdown";
 import { getWebhookUrl } from "../utils/baseUrl";
 import { setDebugMode as setMqttDebugMode } from "./WebSocketContext";
+import attentionLogic from './helpers/message_attention_logic';
 
 // Remove 'webhook/' from these constants as getWebhookUrl already adds that prefix
 const EXPLAINER_URL = 'explainer'; // Select explainer when the user hits the first workflow
@@ -151,31 +152,15 @@ export function useAppState() {
             return;
         }
         
-        // Determine topic name based on debug mode
-        // In debug mode: use base topic for all sessions to share data
-        // In normal mode: use session-specific topic to isolate data
-        const topicName = appDebugMode ? 'attentions' : `attentions/${sessionIdRef.current}`;
-        console.log(`Subscribing to ${topicName} topic (debug mode: ${appDebugMode ? 'enabled' : 'disabled'})`);
+        // Get the topic name using the attention logic module
+        const topicName = attentionLogic.getTopicName(sessionIdRef.current, appDebugMode);
 
         // Subscribe to the appropriate attentions topic
         return webSocketContext.current.subscribe(topicName, (payload) => {
             console.log('Received attentions via WebSocket:', payload);
             
-            // Process attentions from different message formats
-            let attentions = [];
-            
-            // Format 1: Direct attentions array
-            if (Array.isArray(payload)) {
-                attentions = payload;
-            }
-            // Format 2: Attentions in a property
-            else if (payload && Array.isArray(payload.attentions)) {
-                attentions = payload.attentions;
-            }
-            // Format 3: Single attention object
-            else if (payload && payload.id && payload.name && payload.value) {
-                attentions = [payload];
-            }
+            // Extract attentions using the attention logic module
+            const attentions = attentionLogic.extractAttentions(payload);
             
             // Process attentions if we found any
             if (attentions.length > 0) {
