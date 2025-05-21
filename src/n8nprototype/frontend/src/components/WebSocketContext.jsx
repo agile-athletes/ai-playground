@@ -234,33 +234,46 @@ export function WebSocketProvider({ children, authToken, sessionId }) {
     };
     
     // Subscribe callback function
-    const subscribe = (topic, callback) => {
-        // Validate topic
-        if (!topicCallbacks[topic]) {
-            return () => {};
+    // Parameter 'actualMqttTopic' is the specific topic string for MQTT subscription (e.g., 'reasoning' or 'reasoning/sessionId')
+    const subscribe = (actualMqttTopic, callback) => {
+        // Determine the base topic key for callback registration (e.g., 'reasoning' from 'reasoning/sessionId')
+        const baseTopicKey = Object.keys(topicCallbacks).find(key => actualMqttTopic.startsWith(key));
+
+        if (!baseTopicKey) {
+            debugLog(`[WebSocketContext] Cannot determine base topic key for MQTT topic ${actualMqttTopic}. Callback not registered.`);
+            return () => {}; // Cannot register callback if no matching base key found
         }
         
         // Generate a unique ID for this subscription
         const subscriptionId = `sub_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-        debugLog(`Adding callback for topic: ${topic}, ID: ${subscriptionId}, current callbacks: ${topicCallbacks[topic].size}`);
+        debugLog(`[WebSocketContext] Adding callback for base key: ${baseTopicKey} (from actual MQTT topic: ${actualMqttTopic}), ID: ${subscriptionId}, current callbacks: ${topicCallbacks[baseTopicKey].size}`);
         
-        // Add callback to the map
-        topicCallbacks[topic].set(subscriptionId, callback);
+        // Add callback to the map under the determined base topic key
+        topicCallbacks[baseTopicKey].set(subscriptionId, callback);
         
-        // Subscribe to the topic if connected
-        // This will only actually subscribe if we're not already subscribed
+        // Subscribe to the actual MQTT topic if connected
+        // The subscribeToTopic method handles the Set of subscribed topics to avoid duplicate MQTT subscriptions.
         if (isConnected) {
-            subscribeToTopic(topic);
+            subscribeToTopic(actualMqttTopic); // Subscribe to the specific MQTT topic (e.g., 'reasoning/sessionId')
         } else {
-            debugLog(`Client not connected, will subscribe to ${topic} when connected`);
+            // When not connected, subscribeToTopic will be called on successful connection via initializeMqttClient's 'connect' handler
+            // which iterates over 'subscribedTopics'. Ensure 'actualMqttTopic' gets added to 'subscribedTopics' via 'subscribeToTopic'.
+            // The current 'subscribeToTopic' adds to 'subscribedTopics' before the async call, so this should be fine.
+            debugLog(`[WebSocketContext] Client not connected, ${actualMqttTopic} will be subscribed by subscribeToTopic() upon connection (callbacks registered under ${baseTopicKey})`);
+            // To be certain, explicitly call subscribeToTopic here to ensure it's in the subscribedTopics set for reconnections, even if not immediately subscribing.
+            // However, subscribeToTopic already checks for connection. Let's rely on its existing logic and the on-connect resubscription.
+            // If subscribeToTopic is called when not connected, it logs and returns. The topic is added to subscribedTopics set by it.
+            subscribeToTopic(actualMqttTopic); 
         }
         
         // Return unsubscribe function
         return () => {
-            debugLog(`Removing callback for topic: ${topic}, ID: ${subscriptionId}`);
-            if (topicCallbacks[topic]) {
-                topicCallbacks[topic].delete(subscriptionId);
-                debugLog(`Remaining callbacks for topic ${topic}: ${topicCallbacks[topic].size}`);
+            debugLog(`[WebSocketContext] Removing callback for base key: ${baseTopicKey} (from actual MQTT topic: ${actualMqttTopic}), ID: ${subscriptionId}`);
+            if (topicCallbacks[baseTopicKey]) {
+                topicCallbacks[baseTopicKey].delete(subscriptionId);
+                debugLog(`[WebSocketContext] Remaining callbacks for base key ${baseTopicKey}: ${topicCallbacks[baseTopicKey].size}`);
+                // Note: This does not automatically unsubscribe from the MQTT topic.
+                // MQTT unsubscription is managed by 'subscribedTopics' and client.unsubscribe calls, which are less frequent.
             }
         };
     };

@@ -12,9 +12,9 @@ function debugLog(...args) {
 }
 
 class AttentionLogic {
-  constructor() {
-    // No instance variables needed for now
-  }
+  // constructor() {
+  //   // No instance variables needed for now
+  // }
 
   /**
    * Get the topic name for WebSocket subscription
@@ -155,4 +155,5 @@ class AttentionLogic {
   }
 }
 
-export default new AttentionLogic();
+const attentionLogicInstance = new AttentionLogic();
+export default attentionLogicInstance;

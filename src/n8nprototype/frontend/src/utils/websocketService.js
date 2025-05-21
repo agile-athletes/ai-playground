@@ -8,11 +8,6 @@ import mqtt from 'mqtt';
 const WS_BASE_URL = process.env.REACT_APP_WS_URL || 'wss://ai.agile-athletes.de/mqtt';
 // const WS_BASE_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:9001/mqtt';
 
-// TODO: REMOVE THIS FOR PRODUCTION - Test JWT token for development only
-// This is a hardcoded JWT token for testing purposes only
-// It matches the format used in the Python test
-const TEST_JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NDY4ODAwNzYuMjYwOTksImV4cCI6MTc0Njk2NjQ3Ni4yNjA5OSwidXNlcl9pZCI6ImRpbmVzaEBhZ2lsZS1hdGhsZXRlcy5kZSJ9.8pqIbrLblIwbVFb6zwC5b5v7vJCLZwgS5clY-sr3shA'
-
 class WebSocketService {
   constructor() {
     this.socket = null;
@@ -38,8 +33,7 @@ class WebSocketService {
     }
 
     try {
-      // Get the actual JWT token from localStorage instead of using the hardcoded test token
-      let token = TEST_JWT_TOKEN; // Fallback to test token if nothing is found
+      let token = null;
       
       // Try to get the token from localStorage where it's stored during authentication
       try {
@@ -49,10 +43,20 @@ class WebSocketService {
           if (parsedData && parsedData.length > 0 && parsedData[0].token) {
             token = parsedData[0].token;
             console.log('Using token from localStorage for WebSocket connection');
+          } else {
+            console.log('No token found in parsed authData from localStorage.');
           }
+        } else {
+          console.log('No authData found in localStorage.');
         }
       } catch (error) {
         console.error('Error retrieving token from localStorage:', error);
+      }
+
+      // If no token is available from localStorage, we shouldn't connect.
+      if (!token) {
+        console.error('WebSocketService: No token available from localStorage. Connection aborted.');
+        return; // Abort connection if no token
       }
       
       const urlWithParams = `${WS_BASE_URL}?auth=Bearer ${token}${this.sessionId ? `&session_id=${this.sessionId}` : ''}`;
@@ -71,17 +75,9 @@ class WebSocketService {
         this.connected = true;
         this.reconnectAttempts = 0;
         
-        // Subscribe to all topics
-        const topics = ['reasoning', 'navigation', 'attentions'];
-        topics.forEach(topic => {
-          this.socket.subscribe(topic, (err) => {
-            if (!err) {
-              console.log(`Subscribed to topic: ${topic}`);
-            } else {
-              console.error(`Error subscribing to topic ${topic}:`, err);
-            }
-          });
-        });
+        // Subscriptions are now handled by individual components calling websocketService.subscribe()
+        // with their desired topic (base or session-specific).
+        console.log('WebSocketService: Connection established. Ready for component subscriptions.');
       });
       
       this.socket.on('message', (topic, message) => {

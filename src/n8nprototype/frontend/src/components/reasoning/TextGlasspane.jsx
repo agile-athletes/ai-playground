@@ -1,415 +1,403 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './TextGlasspane.css';
-import messageLogic from './message_reasoning_logic';
+// import messageLogic from './message_reasoning_logic.js'; // Removed for refactor
+import { useWebSocket } from '../WebSocketContext'; // Path relative to TextGlasspane.jsx in components/reasoning
 
-// Import websocketService directly to avoid importing from upper directories
-import websocketService from '../../utils/websocketService';
-
-// Simple flag to track if a reasoning message is currently being displayed
-// This prevents attention messages from interrupting reasoning messages
-let isReasoningMessageActive = false;
-
-// Simple array to queue reasoning messages
-let reasoningQueue = [];
+// eslint-disable-next-line no-unused-vars
+const TYPING_SPEED_MS = 20;
 
 const TextGlasspane = ({ sessionId }) => {
-  // States for animation and display
+  // Debug mode flag - set to false to disable console logs
+  const debugMode = true;
+
+  // Helper for debug logging, using the component's debugMode state
+  const debugLog = useCallback((...args) => {
+    if (debugMode) {
+      // eslint-disable-next-line no-console
+      console.log('[GlassPane Debug]', ...args);
+    }
+  }, [debugMode]);
+
+  // Ported from message_reasoning_logic.js
+  const isTestMessageFunc = useCallback((text) => {
+    if (!text) {
+      return false;
+    }
+    return (
+        text.includes('test') ||
+        text.includes('Test') ||
+        text.includes('integration_test') ||
+        text.includes('Test reasoning message from')
+    );
+  }, []);
+
+  // eslint-disable-next-line no-unused-vars
+  const calculateReadingTimeFunc = useCallback((text) => {
+    const isTestMsg = isTestMessageFunc(text);
+    return isTestMsg ?
+        2000 : // 2 seconds for test messages
+        Math.max(750, (text ? text.length : 0) * 15); // Normal calculation
+  }, [isTestMessageFunc]);
+
+  const extractConsiderationsFunc = useCallback((payload) => {
+    const extractedConsiderations = [];
+    if (!payload) {
+      debugLog('ExtractConsiderations: Empty or undefined payload received');
+      return extractedConsiderations;
+    }
+    const payloadStr = JSON.stringify(payload);
+    const isTestMsg = isTestMessageFunc(payloadStr);
+    debugLog(`ExtractConsiderations: Processing payload (test message: ${isTestMsg})`, payload);
+
+    if (payload && payload.type === 'glasspane' && payload.consideration) {
+      extractedConsiderations.push(payload.consideration);
+    } else if (payload && payload.message && typeof payload.message === 'string') {
+      extractedConsiderations.push(payload.message);
+    } else if (payload && payload.consideration && typeof payload.consideration === 'string') {
+      extractedConsiderations.push(payload.consideration);
+    } else if (payload && payload.reasoning && Array.isArray(payload.reasoning)) {
+      for (const item of payload.reasoning) {
+        let considerationAddedThisItem = false;
+        if (item && item.id && item.name && item.value && item.value.type === 'show-text' && typeof item.value.consideration === 'string') {
+          extractedConsiderations.push(item.value.consideration);
+          considerationAddedThisItem = true;
+        }
+        if (!considerationAddedThisItem && item && item.type === 'show-text') {
+          if (item.value && typeof item.value.consideration === 'string') {
+            extractedConsiderations.push(item.value.consideration);
+            considerationAddedThisItem = true;
+          } else if (item.value && typeof item.value === 'string') {
+            extractedConsiderations.push(item.value);
+            considerationAddedThisItem = true;
+          } else if (item.value && typeof item.value.text === 'string') {
+            extractedConsiderations.push(item.value.text);
+            considerationAddedThisItem = true;
+          }
+          // Simplified further, more complex test fallbacks can be added if needed
+        }
+        if (!considerationAddedThisItem && item && item.value && typeof item.value.consideration === 'string') {
+          extractedConsiderations.push(item.value.consideration);
+          considerationAddedThisItem = true;
+        }
+        if (!considerationAddedThisItem && isTestMsg && typeof item === 'string') {
+          extractedConsiderations.push(item);
+        }
+      }
+    } else if (typeof payload === 'string') {
+      extractedConsiderations.push(payload);
+    }
+
+    if (extractedConsiderations.length === 0 && payloadStr && isTestMsg) {
+      debugLog('ExtractConsiderations: Test message fallback - using entire payload string.');
+      extractedConsiderations.push(payloadStr);
+    }
+    debugLog('ExtractConsiderations: Final extracted:', extractedConsiderations);
+    return extractedConsiderations.filter(c => typeof c === 'string' && c.trim() !== '');
+  }, [debugLog, isTestMessageFunc]);
+
+  const isReasoningMessageActiveRef = useRef(false);
+  const [reasoningMessageQueue, setReasoningMessageQueue] = useState([]);
   const [displayedText, setDisplayedText] = useState('');
   const [showPane, setShowPane] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
-  
-  // Use websocketService directly instead of context from upper directory
-  const webSocket = websocketService;
 
-  // State to track the queue of considerations to display
-  const [considerationsQueue, setConsiderationsQueue] = useState([]);
-  const [currentConsiderationIndex, setCurrentConsiderationIndex] = useState(0);
-  
-  // Function to clear all timers
+  const typingTimerRef = useRef(null);
+  const displayTimerRef = useRef(null);
+  const hideTimerRef = useRef(null);
+  const masterHideTimerRef = useRef(null);
+
+  const { subscribe, connected: wsConnected, error: wsError } = useWebSocket();
+
+  const [, setConsiderationsQueueInternal] = useState([]); // Renamed to avoid confusion
+  const [, setCurrentConsiderationIndexInternal] = useState(0); // Renamed
+
   const clearAllTimers = useCallback(() => {
-    messageLogic.clearAllTimers();
-  }, []);
-  
-  // Function to hide the glasspane
+    if (typingTimerRef.current) clearInterval(typingTimerRef.current);
+    if (displayTimerRef.current) clearTimeout(displayTimerRef.current);
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    if (masterHideTimerRef.current) clearTimeout(masterHideTimerRef.current);
+    typingTimerRef.current = null;
+    displayTimerRef.current = null;
+    hideTimerRef.current = null;
+    masterHideTimerRef.current = null;
+    if (debugMode) console.log('TextGlasspane: All internal timers cleared');
+  }, [debugMode]);
+
   const hideGlasspane = useCallback(() => {
-    messageLogic.clearAllTimers();
+    clearAllTimers();
     setShowPane(false);
     setFadeOut(false);
     setDisplayedText('');
-    setConsiderationsQueue([]);
-    setCurrentConsiderationIndex(0);
-    
-    // Reset the reasoning message flag when the glasspane is hidden
-    if (isReasoningMessageActive) {
-      console.log('TextGlasspane: Resetting reasoning message flag on hide');
-      isReasoningMessageActive = false;
+    setConsiderationsQueueInternal([]);
+    setCurrentConsiderationIndexInternal(0);
+    if (isReasoningMessageActiveRef.current) {
+      if (debugMode) console.log('TextGlasspane: Resetting reasoning message flag on hide');
+      isReasoningMessageActiveRef.current = false;
     }
-  }, []);
-  
-  // Function to display text with a typing animation
-  const displayWithTypingAnimation = useCallback((text, index, queueLength, considerations) => {
-    // Get the current consideration index (or use the provided index)
-    const considerationIndex = index !== undefined ? index : currentConsiderationIndex;
-    // Get the queue length (or use the current queue length)
-    const totalConsiderations = queueLength || considerationsQueue.length;
-    // Use the provided considerations array or fall back to the state
-    const considerationsArray = considerations || considerationsQueue;
-    
-    // Log the full text to help with debugging
-    console.log(`TextGlasspane: Displaying text (${text ? text.length : 0} chars): "${text}"`);
-    
-    // Check if this is a test message
-    const isTestMessage = text && (
-      text.includes('test') || 
-      text.includes('Test') || 
-      text.includes('integration_test')
-    );
-    
-    // For test messages, ensure the glasspane is visible immediately
-    if (isTestMessage) {
-      console.log('TextGlasspane: Processing test message, ensuring visibility');
-      // Force the glasspane to be visible immediately
-      setShowPane(true);
-      setFadeOut(false);
-    }
-    
-    // Ensure we have valid text to display
-    const displayText = text || '';
-    
-    // Setup the typing animation for all messages
-    // The message_reasoning_logic.js will handle special cases for test messages in test environments
-    messageLogic.setupTypingAnimation(
-      displayText,
-      considerationIndex,
-      totalConsiderations,
-      considerationsArray,
-      setDisplayedText,
-      setFadeOut,
-      setShowPane,
-      setCurrentConsiderationIndex,
-      (nextText, nextIndex, totalConsiderations, considerationsArray) => {
-        displayWithTypingAnimation(nextText, nextIndex, totalConsiderations, considerationsArray);
-      }
-    );
-  }, [considerationsQueue, currentConsiderationIndex]);
-  
-  
-  // Function to process reasoning messages
-  const processReasoningMessage = useCallback((payload) => {
-    // Clear any existing timers
-    clearAllTimers();
-    
-    // Extract considerations from the payload
-    const extractedConsiderations = messageLogic.extractConsiderations(payload);
-    
-    // Setup auto close for test messages
-    messageLogic.setupAutoClose(payload, hideGlasspane);
-    
-    // Display the considerations if we found any
-    if (extractedConsiderations.length > 0) {
-      // Create a local copy of the considerations to avoid state timing issues
-      const considerationsToDisplay = [...extractedConsiderations];
-      const queueLength = considerationsToDisplay.length;
-      
-      // Update the state
-      setConsiderationsQueue(considerationsToDisplay);
-      setCurrentConsiderationIndex(0);
-      
-      // Make sure we have at least one consideration to display
-      if (queueLength > 0 && considerationsToDisplay[0]) {
-        // Force show the pane immediately
-        setShowPane(true);
-        console.log(`TextGlasspane: Displaying reasoning message: ${considerationsToDisplay[0]}`);
-        
-        // Use setTimeout to ensure state updates have completed
-        setTimeout(() => {
-          // Start the typing animation
-          displayWithTypingAnimation(
-            considerationsToDisplay[0],
-            0,
-            queueLength,
-            considerationsToDisplay
-          );
-          
-          // Setup master timeout
-          messageLogic.setupMasterTimeout(
-            considerationsToDisplay,
-            () => {
-              hideGlasspane();
-              // Hide the glasspane when done
-            },
-            showPane,
-            setShowPane,
-            setFadeOut,
-            setDisplayedText,
-            setConsiderationsQueue,
-            setCurrentConsiderationIndex
-          );
-          
-          // Set a backup timer for test messages
-          if (considerationsToDisplay[0].includes('test') || considerationsToDisplay[0].includes('Test')) {
-            console.log('TextGlasspane: Setting backup timer for test message');
-            setTimeout(() => {
-              console.log('TextGlasspane: Backup timer triggered - checking if glasspane is still visible');
-              if (showPane) {
-                console.log('TextGlasspane: Glasspane still visible - forcing hide');
-                hideGlasspane();
-                // Hide the glasspane when done
-              }
-            }, 8000);
-          }
-        }, 100);
-      } else {
-        // No considerations to display, nothing to do
-      }
-    } else {
-      // No considerations extracted, nothing to do
-    }
-  }, [clearAllTimers, hideGlasspane, showPane, displayWithTypingAnimation]);
-  
-  // Function to process attention messages
-  const processAttentionMessage = useCallback((payload) => {
-    // Clear any existing timers
-    clearAllTimers();
-    
-    // Extract considerations from the payload
-    const extractedConsiderations = messageLogic.extractConsiderations(payload);
-    
-    // Display the considerations if we found any
-    if (extractedConsiderations.length > 0) {
-      // Create a local copy of the considerations
-      const considerationsToDisplay = [...extractedConsiderations];
-      const queueLength = considerationsToDisplay.length;
-      
-      // Update the state
-      setConsiderationsQueue(considerationsToDisplay);
-      setCurrentConsiderationIndex(0);
-      
-      // Make sure we have at least one consideration to display
-      if (queueLength > 0 && considerationsToDisplay[0]) {
-        // Force show the pane immediately
-        setShowPane(true);
-        console.log(`TextGlasspane: Displaying attention message: ${considerationsToDisplay[0]}`);
-        
-        // Use setTimeout to ensure state updates have completed
-        setTimeout(() => {
-          // Display the text with typing animation
-          displayWithTypingAnimation(
-            considerationsToDisplay[0],
-            0,
-            queueLength,
-            considerationsToDisplay
-          );
-          
-          // Set a shorter timeout for attention messages
-          setTimeout(() => {
-            hideGlasspane();
-          }, 3000);
-        }, 100);
-      } else {
-        // No considerations to display, nothing to do
-      }
-    } else {
-      // No considerations extracted, nothing to do
-    }
-  }, [clearAllTimers, hideGlasspane, displayWithTypingAnimation]);
-  
-  // Function to process the next message in the queue
-  const processNextMessage = useCallback(() => {
-    // If no messages in queue or already displaying a message, do nothing
-    if (reasoningQueue.length === 0 || isReasoningMessageActive) {
-      return;
-    }
-    
-    // Get the next message from the queue
-    const payload = reasoningQueue.shift();
-    console.log(`TextGlasspane: Processing next reasoning message (${reasoningQueue.length} remaining)`);
-    console.log('TextGlasspane: Payload:', JSON.stringify(payload));
-    
-    // Set the flag to indicate a reasoning message is active
-    isReasoningMessageActive = true;
-    
-    // Clear any existing timers
-    clearAllTimers();
-    
-    // We'll keep the original approach but make sure we're extracting all considerations from the payload
-    // This is simpler and more reliable than trying to split the array
-    
-    // Extract considerations from the payload
-    const extractedConsiderations = messageLogic.extractConsiderations(payload);
-    
-    // Setup auto close for test messages
-    messageLogic.setupAutoClose(payload, hideGlasspane);
-    
-    // Display the considerations if we found any
-    if (extractedConsiderations.length > 0) {
-      // Create a local copy of the considerations
-      const considerationsToDisplay = [...extractedConsiderations];
-      const queueLength = considerationsToDisplay.length;
-      
-      // Update the state
-      setConsiderationsQueue(considerationsToDisplay);
-      setCurrentConsiderationIndex(0);
-      
-      // Make sure we have at least one consideration to display
-      if (queueLength > 0 && considerationsToDisplay[0]) {
-        // Force show the pane immediately
-        setShowPane(true);
-        console.log(`TextGlasspane: Displaying message: ${considerationsToDisplay[0]}`);
-        
-        // Use setTimeout to ensure state updates have completed
-        setTimeout(() => {
-          // Start the typing animation
-          displayWithTypingAnimation(
-            considerationsToDisplay[0],
-            0,
-            queueLength,
-            considerationsToDisplay
-          );
-          
-          // Use the master timeout for reasoning messages
-          messageLogic.setupMasterTimeout(
-            considerationsToDisplay,
-            () => {
-              // When the timeout completes, hide the glasspane and reset the flag
-              hideGlasspane();
-              isReasoningMessageActive = false;
-              console.log('TextGlasspane: Reasoning message complete, resetting flag');
-              
-              // Process the next message in the queue after a short delay
-              setTimeout(processNextMessage, 500);
-            },
-            showPane,
-            setShowPane,
-            setFadeOut,
-            setDisplayedText,
-            setConsiderationsQueue,
-            setCurrentConsiderationIndex
-          );
-          
-          // Set a backup timer for test messages
-          if (considerationsToDisplay[0].includes('test') || considerationsToDisplay[0].includes('Test')) {
-            console.log('TextGlasspane: Setting backup timer for test message');
-            setTimeout(() => {
-              console.log('TextGlasspane: Backup timer triggered - checking if glasspane is still visible');
-              if (showPane) {
-                console.log('TextGlasspane: Glasspane still visible - forcing hide');
-                hideGlasspane();
-                isReasoningMessageActive = false;
-                
-                // Process the next message in the queue after a short delay
-                setTimeout(processNextMessage, 500);
-              }
-            }, 8000);
-          }
-        }, 100);
-      } else {
-        // No considerations to display, reset flag and process next message
-        isReasoningMessageActive = false;
-        setTimeout(processNextMessage, 100);
-      }
-    } else {
-      // No considerations extracted, reset flag and process next message
-      isReasoningMessageActive = false;
-      setTimeout(processNextMessage, 100);
-    }
-  }, [clearAllTimers, hideGlasspane, showPane, displayWithTypingAnimation]);
+  }, [debugMode, clearAllTimers]);
 
-  // Subscribe to the reasoning topic from WebSocket
-  useEffect(() => {
-    if (!webSocket?.subscribe) {
-      console.warn('WebSocket subscribe method not available');
+  const setupMasterTimeoutFunc = useCallback((considerations, hideCallback, animationSpeed) => {
+    // Clear any existing master timeout
+    if (masterHideTimerRef.current) {
+      clearTimeout(masterHideTimerRef.current);
+      masterHideTimerRef.current = null;
+      debugLog('[MasterTimeout] Cleared existing masterHideTimer.');
+    }
+
+    if (!considerations || considerations.length === 0) {
+      debugLog('[MasterTimeout] No considerations provided. Not setting a new timer.');
       return;
     }
-    
-    // Get the topic name for WebSocket subscription
-    const topicName = messageLogic.getTopicName(sessionId);
-    
-    // Subscribe ONLY to the reasoning topic
-    const unsubscribeReasoning = webSocket.subscribe(topicName, (payload) => {
-      console.log('TextGlasspane: Received reasoning message', payload);
-      
-      // Special handling for the reasoning array format
-      if (payload && payload.reasoning && Array.isArray(payload.reasoning)) {
-        console.log(`TextGlasspane: Received message with reasoning array of length ${payload.reasoning.length}`);
-        
-        // Process each reasoning item directly
-        const considerations = [];
-        
-        // Extract all considerations from the reasoning array
-        payload.reasoning.forEach(item => {
-          if (item && item.value && item.value.type === 'show-text' && item.value.consideration) {
-            considerations.push(item.value.consideration);
-          }
-        });
-        
-        if (considerations.length > 0) {
-          console.log(`TextGlasspane: Extracted ${considerations.length} considerations:`, considerations);
-          
-          // Only process if we're not already showing a message
-          if (!isReasoningMessageActive) {
-            isReasoningMessageActive = true;
-            
-            // Clear any existing timers
-            clearAllTimers();
-            
-            // Update the state
-            setConsiderationsQueue(considerations);
-            setCurrentConsiderationIndex(0);
-            
-            // Display the first consideration
-            if (considerations[0]) {
-              setShowPane(true);
-              console.log(`TextGlasspane: Displaying first consideration: ${considerations[0]}`);
-              
-              // Use setTimeout to ensure state updates have completed
-              setTimeout(() => {
-                displayWithTypingAnimation(
-                  considerations[0],
-                  0,
-                  considerations.length,
-                  considerations
-                );
-              }, 100);
-            }
-          }
-        }
-      } else {
-        // For other message formats, add to queue and process
-        reasoningQueue.push(payload);
-        processNextMessage();
-      }
+
+    debugLog(`[MasterTimeout] Setting up for ${considerations.length} considerations. Speed: ${animationSpeed}ms/char.`);
+
+    let totalDuration = 0;
+    const FADE_OUT_BUFFER_MS = 500; // Time for fade-out animation
+
+    considerations.forEach((text, index) => {
+      const typingTime = (text ? text.length : 0) * animationSpeed;
+      const readingTime = calculateReadingTimeFunc(text); // Use ported function
+      const considerationDuration = typingTime + readingTime + FADE_OUT_BUFFER_MS;
+      totalDuration += considerationDuration;
+      debugLog(`[MasterTimeout] Consideration ${index + 1}: "${text ? text.substring(0, 30) : ''}..."`);
+      debugLog(`  Typing: ${typingTime}ms, Reading: ${readingTime}ms, FadeBuffer: ${FADE_OUT_BUFFER_MS}ms. Total: ${considerationDuration}ms`);
     });
     
-    // Cleanup function
+    const generalBuffer = 1000; // Small general buffer for safety
+    totalDuration += generalBuffer;
+
+    debugLog(`[MasterTimeout] Total calculated duration (incl. general buffer ${generalBuffer}ms): ${totalDuration}ms.`);
+
+    if (totalDuration <= 0) {
+        debugLog('[MasterTimeout] Calculated total duration is zero or negative. Not setting timer.');
+        return;
+    }
+
+    masterHideTimerRef.current = setTimeout(() => {
+      debugLog(`[MasterTimeout] MASTER TIMEOUT FIRED after ${totalDuration}ms. Calling hideCallback.`);
+      hideCallback(); 
+    }, totalDuration);
+
+    debugLog(`[MasterTimeout] Master hide timer set for ${totalDuration}ms.`);
+  }, [debugLog, calculateReadingTimeFunc]); // Added calculateReadingTimeFunc dependency
+
+  // Forward declaration for displayWithTypingAnimation to be used in processReasoningMessage
+  let displayWithTypingAnimationCallback;
+
+  const processReasoningMessage = useCallback((payload, isFromQueue = false) => {
+    if (debugMode) console.log(`TextGlasspane: processReasoningMessage received. FromQueue: ${isFromQueue}, ActiveRef: ${isReasoningMessageActiveRef.current}`, payload);
+
+    if (!isFromQueue && isReasoningMessageActiveRef.current) {
+      if (debugMode) console.log('TextGlasspane: Reasoning message already active, queueing new message.');
+      setReasoningMessageQueue(prevQueue => [...prevQueue, payload]);
+      return;
+    }
+
+    clearAllTimers();
+    const considerations = extractConsiderationsFunc(payload);
+    if (debugMode) console.log('TextGlasspane: Extracted considerations:', considerations);
+
+    if (considerations && considerations.length > 0) {
+      isReasoningMessageActiveRef.current = true;
+      if (debugMode) console.log(`TextGlasspane: Set isReasoningMessageActiveRef.current = true.`);
+      setShowPane(true);
+      setFadeOut(false);
+      setDisplayedText('');
+      setConsiderationsQueueInternal(considerations);
+      setCurrentConsiderationIndexInternal(0);
+      setupMasterTimeoutFunc(considerations, hideGlasspane, TYPING_SPEED_MS);
+      if (debugMode) console.log('TextGlasspane: Called setupMasterTimeoutFunc.');
+
+      // Call the actual displayWithTypingAnimation (defined below)
+      if (displayWithTypingAnimationCallback) {
+        displayWithTypingAnimationCallback(considerations[0], 0, considerations.length, considerations);
+      } else {
+        if (debugMode) console.error('TextGlasspane: displayWithTypingAnimationCallback not yet defined when processReasoningMessage called!');
+      }
+    } else {
+      if (debugMode) console.log('TextGlasspane: No valid considerations to display. Resetting active flag if set.');
+      isReasoningMessageActiveRef.current = false;
+    }
+  }, [debugMode, clearAllTimers, extractConsiderationsFunc, hideGlasspane, setReasoningMessageQueue, setShowPane, setFadeOut, setDisplayedText, setConsiderationsQueueInternal, setCurrentConsiderationIndexInternal, setupMasterTimeoutFunc, displayWithTypingAnimationCallback, isReasoningMessageActiveRef]);
+
+  displayWithTypingAnimationCallback = useCallback((text, index, queueLength, considerations) => {
+    // text, index, queueLength, considerations are parameters
+    // isTestMessageFunc, calculateReadingTimeFunc, TYPING_SPEED_MS, debugLog are from closure
+    // typingTimerRef, displayTimerRef, hideTimerRef are from closure
+    // setDisplayedText, setFadeOut, setShowPane, setCurrentConsiderationIndexInternal are from closure
+    // hideGlasspane is the onSequenceCompleteCallback
+
+    let currentIndex = 0; 
+    setDisplayedText('');
+
+    if (typingTimerRef.current) {
+      clearInterval(typingTimerRef.current);
+      typingTimerRef.current = null;
+    }
+    if (displayTimerRef.current) {
+      clearTimeout(displayTimerRef.current);
+      displayTimerRef.current = null;
+    }
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+
+    setFadeOut(false);
+    setShowPane(true);
+
+    const isTestMsg = isTestMessageFunc(text);
+    let displayText = text; 
+
+    debugLog(`Starting text display for: "${displayText}" (isTestMsg: ${isTestMsg})`);
+
+    const isTestEnvironment = process.env.NODE_ENV === 'test';
+    const shouldSkipAnimation = isTestMsg && isTestEnvironment;
+
+    if (shouldSkipAnimation) {
+      debugLog('Test message in test environment - displaying full text immediately');
+      setDisplayedText(displayText);
+      
+      const readingTime = calculateReadingTimeFunc(displayText);
+      debugLog(`Test message fully displayed, will show for ${readingTime}ms before fade-out`);
+      
+      displayTimerRef.current = setTimeout(() => {
+        debugLog(`Starting fade-out for test message ${index + 1}/${queueLength}`);
+        setFadeOut(true);
+        
+        hideTimerRef.current = setTimeout(() => {
+          const nextIndex = index + 1;
+          const nextConsiderationExists = nextIndex < queueLength;
+          const nextText = nextConsiderationExists ? considerations[nextIndex] : null; 
+          
+          if (nextConsiderationExists && nextText) {
+            debugLog(`Moving to consideration ${nextIndex + 1}/${queueLength}`);
+            setCurrentConsiderationIndexInternal(nextIndex);
+            setFadeOut(false);
+            
+            setTimeout(() => {
+              displayWithTypingAnimationCallback(nextText, nextIndex, queueLength, considerations);
+            }, 0);
+          } else {
+            debugLog(`No more considerations after ${index + 1}/${queueLength}. Signaling sequence completion.`);
+            hideGlasspane(); // This is the onSequenceCompleteCallback
+          }
+        }, 500); 
+      }, readingTime);
+      
+      return; 
+    }
+
+    debugLog(`[DisplayFunc ${index + 1}/${queueLength}] Entry. Text: "${displayText ? displayText.substring(0,30) : ''}...", animationSpeed: ${TYPING_SPEED_MS}`);
+    
+    if (displayText && displayText.length > 500) {
+      debugLog(`Long message detected (${displayText.length} chars) - ensuring proper display`);
+    }
+
+    typingTimerRef.current = setInterval(() => {
+      const currentDisplayTextLength = (typeof displayText === 'string' ? displayText.length : 0);
+      if (currentIndex <= currentDisplayTextLength) {
+        const currentTextSlice = (typeof displayText === 'string' ? displayText.substring(0, currentIndex) : '');
+        
+        setDisplayedText(currentTextSlice);
+        debugLog(`[DisplayFunc ${index + 1}/${queueLength}] Typing: "${currentTextSlice}", Calling setShowPane(true)`);
+        setShowPane(true); 
+        currentIndex++;
+      } else {
+        clearInterval(typingTimerRef.current);
+        typingTimerRef.current = null;
+
+        debugLog(`[DisplayFunc ${index + 1}/${queueLength}] Typing complete for: "${displayText}"`);
+        
+        const readingTime = calculateReadingTimeFunc(displayText);
+        debugLog(`[DisplayFunc ${index + 1}/${queueLength}] Calculated readingTime: ${readingTime}ms`);
+        
+        displayTimerRef.current = setTimeout(() => {
+          debugLog(`[DisplayFunc ${index + 1}/${queueLength}] DISPLAY_TIMER_FIRED. Calling setFadeOut(true).`);
+          setFadeOut(true);
+          
+          hideTimerRef.current = setTimeout(() => {
+            const nextIndex = index + 1;
+            const nextConsiderationExists = nextIndex < queueLength;
+            const nextText = nextConsiderationExists ? considerations[nextIndex] : null;
+            
+            debugLog(`[DisplayFunc ${index + 1}/${queueLength}] HIDE_TIMER_FIRED.`);
+            if (nextConsiderationExists && nextText) {
+              debugLog(`Moving to consideration ${nextIndex + 1}/${queueLength}`);
+              setCurrentConsiderationIndexInternal(nextIndex);
+              setFadeOut(false);
+              
+              setTimeout(() => {
+                displayWithTypingAnimationCallback(nextText, nextIndex, queueLength, considerations);
+              }, 0);
+            } else {
+              debugLog(`No more considerations after ${index + 1}/${queueLength}. Signaling sequence completion.`);
+              hideGlasspane(); // This is the onSequenceCompleteCallback
+            }
+          }, 500);
+        }, readingTime);
+      }
+    }, TYPING_SPEED_MS);
+  }, [displayWithTypingAnimationCallback, debugLog, calculateReadingTimeFunc, hideGlasspane, isTestMessageFunc, setCurrentConsiderationIndexInternal, setDisplayedText, setFadeOut, setShowPane, displayTimerRef, hideTimerRef, typingTimerRef]);
+
+
+  useEffect(() => {
+    if (debugMode) {
+      console.log(`TextGlasspane: WebSocketContext connected: ${wsConnected}, error: ${wsError}`);
+    }
+    if (!wsConnected || wsError) {
+      if (debugMode) console.log('TextGlasspane: WebSocket not connected or error, skipping subscription.');
+      return;
+    }
+    if (debugMode) console.log(`TextGlasspane: Attempting to subscribe to reasoning topic for session: ${sessionId}`);
+
+    const unsubscribeReasoning = subscribe(`reasoning/${sessionId}`, (payload) => {
+      if (debugMode) console.log('TextGlasspane: Received raw reasoning message:', payload);
+      // Check ref directly to decide on queueing vs processing
+      if (!isReasoningMessageActiveRef.current) {
+        if (debugMode) console.log('TextGlasspane: No active message, processing directly.');
+        processReasoningMessage(payload, false); // Process directly
+      } else {
+        if (debugMode) console.log('TextGlasspane: Message active, adding to reasoningMessageQueue.');
+        setReasoningMessageQueue(prevQueue => [...prevQueue, payload]);
+      }
+    });
+
     return () => {
       clearAllTimers();
-      if (unsubscribeReasoning) {
-        unsubscribeReasoning();
-      }
+      if (unsubscribeReasoning) unsubscribeReasoning();
     };
-  }, [webSocket, displayWithTypingAnimation, hideGlasspane, sessionId, showPane, clearAllTimers, processNextMessage]);
+  }, [subscribe, wsConnected, wsError, sessionId, debugMode, clearAllTimers, processReasoningMessage, setReasoningMessageQueue, isReasoningMessageActiveRef]);
 
-  // Don't render anything if we shouldn't show the pane
+
+  useEffect(() => {
+    if (!isReasoningMessageActiveRef.current && reasoningMessageQueue.length > 0) {
+      if (debugMode) console.log(`TextGlasspane QueueWatcher: Active: ${isReasoningMessageActiveRef.current}, Queue: ${reasoningMessageQueue.length}. Processing next.`);
+      const nextMessage = reasoningMessageQueue[0];
+      if (nextMessage) {
+        setReasoningMessageQueue(prevQueue => prevQueue.slice(1));
+        processReasoningMessage(nextMessage, true);
+      }
+    }
+  }, [reasoningMessageQueue, debugMode, processReasoningMessage]);
+
   if (!showPane) {
     return null;
   }
 
-  // Ensure the text is properly displayed without being cut off
   const textToDisplay = displayedText || '';
-  
   return (
-    <div 
-      className={`text-glasspane ${fadeOut ? 'fade-out' : ''}`}
-      onClick={hideGlasspane}
-      onTouchEnd={hideGlasspane}
-    >
-      <div className="text-glasspane-content">
-        <p className="trickling-text">
-          {textToDisplay}
-        </p>
+      <div
+          className={`text-glasspane ${fadeOut ? 'fade-out' : ''}`}
+          onClick={hideGlasspane}
+          onTouchEnd={hideGlasspane}
+      >
+        <div className="text-glasspane-content">
+          <p className="trickling-text">
+            {textToDisplay}
+          </p>
+        </div>
       </div>
-    </div>
   );
 };
 
