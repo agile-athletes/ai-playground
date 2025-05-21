@@ -105,6 +105,7 @@ const TextGlasspane = ({ sessionId }) => {
   const displayTimerRef = useRef(null);
   const hideTimerRef = useRef(null);
   const masterHideTimerRef = useRef(null);
+  const displayWithTypingAnimationRef = useRef(null);
 
   const { subscribe, connected: wsConnected, error: wsError } = useWebSocket();
 
@@ -181,9 +182,6 @@ const TextGlasspane = ({ sessionId }) => {
     debugLog(`[MasterTimeout] Master hide timer set for ${totalDuration}ms.`);
   }, [debugLog, calculateReadingTimeFunc]);
 
-  // Forward declaration for displayWithTypingAnimation to be used in processReasoningMessage
-  let displayWithTypingAnimationCallback;
-
   const processReasoningMessage = useCallback((payload, isFromQueue = false) => {
     if (debugMode) console.log(`TextGlasspane: processReasoningMessage received. FromQueue: ${isFromQueue}, ActiveRef: ${isReasoningMessageActiveRef.current}`, payload);
 
@@ -208,19 +206,19 @@ const TextGlasspane = ({ sessionId }) => {
       setupMasterTimeoutFunc(considerations, hideGlasspane, TYPING_SPEED_MS);
       if (debugMode) console.log('TextGlasspane: Called setupMasterTimeoutFunc.');
 
-      // Call the actual displayWithTypingAnimation (defined below)
-      if (displayWithTypingAnimationCallback) {
-        displayWithTypingAnimationCallback(considerations[0], 0, considerations.length, considerations);
+    // Use the ref instead of the direct function
+      if (displayWithTypingAnimationRef.current) {
+        displayWithTypingAnimationRef.current(considerations[0], 0, considerations.length, considerations);
       } else {
-        if (debugMode) console.error('TextGlasspane: displayWithTypingAnimationCallback not yet defined when processReasoningMessage called!');
+        if (debugMode) console.error('TextGlasspane: displayWithTypingAnimationRef.current not defined!');
       }
     } else {
       if (debugMode) console.log('TextGlasspane: No valid considerations to display. Resetting active flag if set.');
       isReasoningMessageActiveRef.current = false;
     }
-  }, [debugMode, clearAllTimers, extractConsiderationsFunc, hideGlasspane, setReasoningMessageQueue, setShowPane, setFadeOut, setDisplayedText, setConsiderationsQueueInternal, setCurrentConsiderationIndexInternal, setupMasterTimeoutFunc, displayWithTypingAnimationCallback, isReasoningMessageActiveRef]);
+  }, [debugMode, clearAllTimers, extractConsiderationsFunc, hideGlasspane, setReasoningMessageQueue, setShowPane, setFadeOut, setDisplayedText, setConsiderationsQueueInternal, setCurrentConsiderationIndexInternal, setupMasterTimeoutFunc, isReasoningMessageActiveRef]);
 
-  displayWithTypingAnimationCallback = useCallback((text, index, queueLength, considerations) => {
+  const displayWithTypingAnimationCallback = useCallback((text, index, queueLength, considerations) => {
     // text, index, queueLength, considerations are parameters
     // isTestMessageFunc, calculateReadingTimeFunc, TYPING_SPEED_MS, debugLog are from closure
     // typingTimerRef, displayTimerRef, hideTimerRef are from closure
@@ -338,8 +336,12 @@ const TextGlasspane = ({ sessionId }) => {
         }, readingTime);
       }
     }, TYPING_SPEED_MS);
-  }, [displayWithTypingAnimationCallback, debugLog, calculateReadingTimeFunc, hideGlasspane, isTestMessageFunc, setCurrentConsiderationIndexInternal, setDisplayedText, setFadeOut, setShowPane, displayTimerRef, hideTimerRef, typingTimerRef]);
+  }, [debugLog, calculateReadingTimeFunc, hideGlasspane, isTestMessageFunc, setCurrentConsiderationIndexInternal, setDisplayedText, setFadeOut, setShowPane, displayTimerRef, hideTimerRef, typingTimerRef]);
 
+  // Update the ref whenever the callback changes
+  useEffect(() => {
+    displayWithTypingAnimationRef.current = displayWithTypingAnimationCallback;
+  }, [displayWithTypingAnimationCallback]);
 
   useEffect(() => {
     if (debugMode) {
