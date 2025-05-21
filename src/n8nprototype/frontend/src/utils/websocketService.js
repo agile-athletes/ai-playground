@@ -38,11 +38,26 @@ class WebSocketService {
     }
 
     try {
-      // Add token and session_id as URL parameters
-      const token = TEST_JWT_TOKEN;
+      // Get the actual JWT token from localStorage instead of using the hardcoded test token
+      let token = TEST_JWT_TOKEN; // Fallback to test token if nothing is found
+      
+      // Try to get the token from localStorage where it's stored during authentication
+      try {
+        const authData = localStorage.getItem('authData');
+        if (authData) {
+          const parsedData = JSON.parse(authData);
+          if (parsedData && parsedData.length > 0 && parsedData[0].token) {
+            token = parsedData[0].token;
+            console.log('Using token from localStorage for WebSocket connection');
+          }
+        }
+      } catch (error) {
+        console.error('Error retrieving token from localStorage:', error);
+      }
+      
       const urlWithParams = `${WS_BASE_URL}?auth=Bearer ${token}${this.sessionId ? `&session_id=${this.sessionId}` : ''}`;
       
-      console.log(`Connecting to WebSocket server at ${urlWithParams}`);
+      console.log(`Connecting to WebSocket server at ${WS_BASE_URL} with auth parameters`);
       
       // Connect directly to the MQTT server using the mqtt.js library
       // Using URL parameters for authentication instead of headers due to CORS restrictions
@@ -236,10 +251,35 @@ class WebSocketService {
 // Create a singleton instance
 const websocketService = new WebSocketService();
 
-// Connect when the service is imported
-// This ensures we establish a connection as soon as possible
-setTimeout(() => {
-  websocketService.connect();
-}, 1000); // Small delay to ensure the page is loaded
+// Don't connect automatically on import
+// Instead, we'll connect only when we have a valid token
+// This prevents failed connection attempts in the logs
+
+/**
+ * Initialize the WebSocket connection with a valid token
+ * This should be called after authentication is complete
+ */
+websocketService.initialize = () => {
+  // Check if we have a valid token in localStorage before connecting
+  try {
+    const authData = localStorage.getItem('authData');
+    if (authData) {
+      const parsedData = JSON.parse(authData);
+      if (parsedData && parsedData.length > 0 && parsedData[0].token) {
+        console.log('Valid token found, initializing WebSocket connection');
+        // Connect with a small delay to ensure everything is ready
+        setTimeout(() => {
+          websocketService.connect();
+        }, 500);
+        return true;
+      }
+    }
+    console.log('No valid token found, WebSocket connection deferred');
+    return false;
+  } catch (error) {
+    console.error('Error checking for token:', error);
+    return false;
+  }
+};
 
 export default websocketService;

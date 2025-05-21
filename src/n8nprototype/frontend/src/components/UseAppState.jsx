@@ -6,7 +6,7 @@ import {
 import {JsonToMarkdownConverter} from "./helpers/json_to_markdown";
 import { getWebhookUrl } from "../utils/baseUrl";
 import { setDebugMode as setMqttDebugMode } from "./WebSocketContext";
-import attentionLogic from './helpers/message_attention_logic';
+import attentionLogic from './attentions/message_attention_logic';
 
 // Remove 'webhook/' from these constants as getWebhookUrl already adds that prefix
 const EXPLAINER_URL = 'explainer'; // Select explainer when the user hits the first workflow

@@ -1,0 +1,69 @@
+.text-glasspane {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 900;
+  pointer-events: auto; /* Enable click events on the glasspane */
+  opacity: 1;
+  transition: opacity 0.5s ease-out;
+}
+
+.text-glasspane.fade-out {
+  opacity: 0;
+}
+
+.text-glasspane-content {
+  width: 90%; /* Increased from max-width: 80% to width: 90% */
+  max-width: 800px; /* Added max-width in pixels to ensure it doesn't get too wide */
+  min-width: 300px; /* Ensure a minimum width for the container */
+  padding: 20px;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  overflow-wrap: break-word; /* Ensure long words break */
+  word-wrap: break-word; /* IE support */
+  word-break: break-word; /* Force long words to break */
+  max-height: 80vh; /* Maximum height to prevent overflow */
+  overflow-y: auto; /* Add scrolling if content exceeds max height */
+  display: flex; /* Use flexbox for better content alignment */
+  flex-direction: column; /* Stack children vertically */
+  justify-content: flex-start; /* Align content to the top */
+  align-items: stretch; /* Stretch children to fill the container width */
+}
+
+.trickling-text {
+  color: #ffffff;
+  font-size: 1.2rem;
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap; /* Preserve whitespace but wrap text */
+  overflow-wrap: break-word; /* Ensure long words break */
+  word-break: break-word; /* Break words at arbitrary points if needed */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  text-align: left; /* Changed from center to left for better readability of long text */
+  max-height: 70vh; /* Limit height to 70% of viewport height */
+  overflow-y: auto; /* Add scrollbar if content exceeds max height */
+  width: 100%; /* Ensure text takes full width of container */
+  display: block; /* Ensure text is displayed as a block */
+  box-sizing: border-box; /* Include padding in width calculation */
+  padding: 0; /* Remove any padding that might cause text to be cut off */
+}
+
+/* Add a blinking cursor effect */
+.trickling-text::after {
+  content: '|';
+  animation: blink 1s step-end infinite;
+  font-weight: normal;
+  color: #ffffff;
+}
+
+@keyframes blink {
+  from, to { opacity: 1; }
+  50% { opacity: 0; }
+}

@@ -44,6 +44,7 @@ MQTT_HOST = "ai.agile-athletes.de"  # Hostname for the MQTT server
 MQTT_PORT = 443  # Default WSS port
 MQTT_PATH = "/mqtt"  # Path for the MQTT WebSocket endpoint
 MQTT_TOPICS = ["reasoning", "workflows", "attentions"]
+# MQTT_TOPICS = ["reasoning"]
 TIMEOUT_SECONDS = 10
 
 # Flag to determine if we're running in a test environment
@@ -327,31 +328,87 @@ class TestMqttMessaging(unittest.TestCase):
             for topic in MQTT_TOPICS:
                 # Create different message types based on the topic
                 if topic == "reasoning":
+                    # Create a test message that matches the format in sample-response.json
+                    # with both show-text and next-navigation types
                     test_message = {
-                        "consideration": f"Test reasoning message from integration test at {datetime.datetime.utcnow().isoformat()}",
-                        "type": "glasspane",
-                        "is_test": True,  # Add a special flag for tests
-                        "auto_close": True  # Signal that this message should auto-close
+                        "test_id": self.client_id,
+                        "timestamp": datetime.datetime.utcnow().isoformat(),
+                        "reasoning": [
+                            {
+                                "id": 1,
+                                "name": "Only text display",
+                                "value": {
+                                    "type": "show-text",
+                                    "consideration": f"This is a test show-text message from integration test at {datetime.datetime.utcnow().isoformat()}"
+                                },
+                                "weight": "0.8",
+                                "parent_id": None
+                            },
+                            {
+                                "id": 2,
+                                "name": "Only text display",
+                                "value": {
+                                    "type": "show-text",
+                                    "consideration": f"This was added by Jelle at {datetime.datetime.utcnow().isoformat()}"
+                                },
+                                "weight": "0.8",
+                                "parent_id": None
+                            },
+                            {
+                                "id": 3,
+                                "name": "Navigate to next workflow",
+                                "value": {
+                                    "type": "next-navigation",
+                                    "consideration": f"This is a test next-navigation message from integration test at {datetime.datetime.utcnow().isoformat()}",
+                                    "suggested": "Our business of online translation services is under pressure of AI-Chat Apps."
+                                },
+                                "weight": "0.7",
+                                "parent_id": None
+                            }
+                        ]
                     }
                 elif topic == "workflows":
-                    test_message = [
-                        {
-                            "id": f"test-workflow-{uuid.uuid4()}",
-                            "name": "Test Workflow Item",
-                            "value": {
-                                "url": "test-workflow",
-                                "description": "Test workflow from integration test"
+                    # For workflows, the value is an object with type, label, selected, and url properties
+                    test_message = {
+                        "test_id": self.client_id,
+                        "timestamp": datetime.datetime.utcnow().isoformat(),
+                        "workflows": [
+                            {
+                                "id": 1,
+                                "name": "Workflow 1",
+                                "value": {
+                                    "type": "workflow",
+                                    "label": "SOFT Validation",
+                                    "selected": False,
+                                    "url": "http://localhost:5678/webhook/workflow-1"
+                                },
+                                "weight": "0.7",
+                                "parent_id": None
                             }
-                        }
-                    ]
+                        ]
+                    }
                 elif topic == "attentions":
-                    test_message = [
-                        {
-                            "id": f"test-att-{uuid.uuid4()}",
-                            "name": "Test Attention Item",
-                            "value": "This is a test attention message from the integration test"
-                        }
-                    ]
+                    # For attentions, the value is a simple string, not a complex object
+                    test_message = {
+                        "test_id": self.client_id,
+                        "timestamp": datetime.datetime.utcnow().isoformat(),
+                        "attentions": [
+                            {
+                                "id": 1,
+                                "name": "Accuracy of USER_TEXT",
+                                "value": "0.0",
+                                "weight": "0.5",
+                                "parent_id": None
+                            },
+                            {
+                                "id": 2,
+                                "name": "Title",
+                                "value": f"Test attention message at {datetime.datetime.utcnow().isoformat()}",
+                                "weight": "0.7",
+                                "parent_id": 1
+                            }
+                        ]
+                    }
                 else:
                     test_message = {
                         "test_id": self.client_id,

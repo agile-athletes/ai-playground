@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import ChatWindow from './components/ChatWindow';
+import ChatWindow from './components/attentions/ChatWindow';
 import InputArea from './components/InputArea';
-import NavigationLeft from './components/NavigationLeft';
+import NavigationLeft from './components/workflows/NavigationLeft';
+import TextGlasspane from './components/reasoning/TextGlasspane';
 import './App.css';
 import {useAppState} from "./components/UseAppState";
 import {EmailForm} from "./components/EmailForm";
 import {TokenForm} from "./components/TokenForm";
 import { WebSocketProvider, useWebSocket } from './components/WebSocketContext';
+import websocketService from './utils/websocketService';
 
 // Component to update WebSocket connection status
 function WebSocketStatusUpdater({ setWsConnected }) {
@@ -80,6 +82,15 @@ function App() {
         setStep('authenticated');
         setJwtToken(response); // The response is already in the correct format [{ token: '...' }]
         console.log('Authentication state set to authenticated');
+        
+        // Store auth data in localStorage for the websocketService to use
+        localStorage.setItem('authData', JSON.stringify(response));
+        
+        // Initialize the WebSocket connection now that we have a valid token
+        setTimeout(() => {
+            const initialized = websocketService.initialize();
+            console.log('WebSocket initialization result:', initialized);
+        }, 500); // Small delay to ensure token is saved
     };
 
     return (
@@ -100,6 +111,8 @@ function App() {
                         <ChatWindow 
                             messages={messages} 
                         />
+                        {/* Mount TextGlasspane at the App level to cover the entire application */}
+                        <TextGlasspane sessionId={sessionId} />
                         <InputArea onSend={sendMessage} onNewChat={clearChat} loading={loading} blockLoading={blockLoading}/>
                     </div>
                     <div className="right-sidebar"></div>

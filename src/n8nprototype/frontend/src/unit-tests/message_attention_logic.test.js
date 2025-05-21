@@ -1,4 +1,4 @@
-import attentionLogic from '../components/helpers/message_attention_logic';
+import attentionLogic from '../components/attentions/message_attention_logic';
 
 describe('AttentionLogic', () => {
   // Setup and teardown

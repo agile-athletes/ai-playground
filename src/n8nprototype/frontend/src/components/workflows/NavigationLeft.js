@@ -1,5 +1,16 @@
 import './NavigationLeft.css';
-import WorkflowButton from './WorkflowButton';
+// Create a local WorkflowButton component instead of importing from upper directory
+
+const WorkflowButton = ({ workflow, selectWorkflow, index }) => {
+    return (
+        <button 
+            className="workflow-button"
+            onClick={() => selectWorkflow(workflow)}
+        >
+            {workflow.name || `Workflow ${index + 1}`}
+        </button>
+    );
+};
 
 const NavigationLeft = ({ workflows, selectWorkflow }) => {
     return (

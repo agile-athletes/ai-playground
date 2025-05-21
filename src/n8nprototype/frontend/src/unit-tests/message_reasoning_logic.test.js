@@ -1,4 +1,4 @@
-import messageLogic from '../components/helpers/message_reasoning_logic';
+import messageLogic from '../components/reasoning/message_reasoning_logic';
 import { getDebugMode } from '../components/WebSocketContext';
 
 // Mock the WebSocketContext module

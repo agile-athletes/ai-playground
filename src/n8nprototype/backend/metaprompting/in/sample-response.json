@@ -63,7 +63,7 @@
       "id": 2,
       "name": "Navigate to next workflow",
       "value": {
-        "type": "show-text",
+        "type": "next-navigation",
         "consideration": "Based on the request, the request indicates the need for a validation by the SOFT framework. This can be done by the next workflow called Soft Validation.",
         "suggested": "Our business of online translation services is under pressure of AI-Chat Apps."
       },

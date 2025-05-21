@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import ChatMessage from './ChatMessage';
-import TextGlasspane from './TextGlasspane';
 import './ChatWindow.css';
 
 const ChatWindow = ({ messages, sessionId }) => {
@@ -17,7 +16,6 @@ const ChatWindow = ({ messages, sessionId }) => {
                 <ChatMessage key={index} message={message} />
             ))}
             <div ref={chatEndRef} />
-            <TextGlasspane sessionId={sessionId} />
         </div>
     );
 };
