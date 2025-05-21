@@ -136,7 +136,7 @@ const TextGlasspane = ({ sessionId }) => {
     }
   }, [debugMode, clearAllTimers]);
 
-  const setupMasterTimeoutFunc = useCallback((considerations, hideCallback, animationSpeed) => {
+  const setupMasterTimeoutFunc = useCallback((considerations, onMasterTimeout, animationSpeed) => {
     // Clear any existing master timeout
     if (masterHideTimerRef.current) {
       clearTimeout(masterHideTimerRef.current);
@@ -145,7 +145,7 @@ const TextGlasspane = ({ sessionId }) => {
     }
 
     if (!considerations || considerations.length === 0) {
-      debugLog('[MasterTimeout] No considerations provided. Not setting a new timer.');
+      debugLog('[MasterTimeout] No considerations provided to setupMasterTimeout. Not setting a new timer.');
       return;
     }
 
@@ -156,30 +156,30 @@ const TextGlasspane = ({ sessionId }) => {
 
     considerations.forEach((text, index) => {
       const typingTime = (text ? text.length : 0) * animationSpeed;
-      const readingTime = calculateReadingTimeFunc(text); // Use ported function
+      const readingTime = calculateReadingTimeFunc(text);
       const considerationDuration = typingTime + readingTime + FADE_OUT_BUFFER_MS;
       totalDuration += considerationDuration;
       debugLog(`[MasterTimeout] Consideration ${index + 1}: "${text ? text.substring(0, 30) : ''}..."`);
       debugLog(`  Typing: ${typingTime}ms, Reading: ${readingTime}ms, FadeBuffer: ${FADE_OUT_BUFFER_MS}ms. Total: ${considerationDuration}ms`);
     });
     
-    const generalBuffer = 1000; // Small general buffer for safety
+    const generalBuffer = 1000; 
     totalDuration += generalBuffer;
 
-    debugLog(`[MasterTimeout] Total calculated duration (incl. general buffer ${generalBuffer}ms): ${totalDuration}ms.`);
+    debugLog(`[MasterTimeout] Total calculated duration for all considerations (incl. general buffer ${generalBuffer}ms): ${totalDuration}ms.`);
 
     if (totalDuration <= 0) {
-        debugLog('[MasterTimeout] Calculated total duration is zero or negative. Not setting timer.');
+        debugLog('[MasterTimeout] Calculated total duration is zero or negative. Not setting master timeout.');
         return;
     }
 
     masterHideTimerRef.current = setTimeout(() => {
-      debugLog(`[MasterTimeout] MASTER TIMEOUT FIRED after ${totalDuration}ms. Calling hideCallback.`);
-      hideCallback(); 
+      debugLog(`[MasterTimeout] MASTER TIMEOUT FIRED after ${totalDuration}ms. Calling onMasterTimeout.`);
+      if (typeof onMasterTimeout === 'function') onMasterTimeout(); 
     }, totalDuration);
 
     debugLog(`[MasterTimeout] Master hide timer set for ${totalDuration}ms.`);
-  }, [debugLog, calculateReadingTimeFunc]); // Added calculateReadingTimeFunc dependency
+  }, [debugLog, calculateReadingTimeFunc]);
 
   // Forward declaration for displayWithTypingAnimation to be used in processReasoningMessage
   let displayWithTypingAnimationCallback;
