@@ -224,12 +224,16 @@ const TextGlasspane = ({ sessionId }) => {
     // Get the next message from the queue
     const payload = reasoningQueue.shift();
     console.log(`TextGlasspane: Processing next reasoning message (${reasoningQueue.length} remaining)`);
+    console.log('TextGlasspane: Payload:', JSON.stringify(payload));
     
     // Set the flag to indicate a reasoning message is active
     isReasoningMessageActive = true;
     
     // Clear any existing timers
     clearAllTimers();
+    
+    // We'll keep the original approach but make sure we're extracting all considerations from the payload
+    // This is simpler and more reliable than trying to split the array
     
     // Extract considerations from the payload
     const extractedConsiderations = messageLogic.extractConsiderations(payload);
@@ -323,13 +327,58 @@ const TextGlasspane = ({ sessionId }) => {
     
     // Subscribe ONLY to the reasoning topic
     const unsubscribeReasoning = webSocket.subscribe(topicName, (payload) => {
-      console.log('TextGlasspane: Received reasoning message');
+      console.log('TextGlasspane: Received reasoning message', payload);
       
-      // Add the message to the reasoning queue
-      reasoningQueue.push(payload);
-      
-      // Try to process the message (will only process if not already displaying a message)
-      processNextMessage();
+      // Special handling for the reasoning array format
+      if (payload && payload.reasoning && Array.isArray(payload.reasoning)) {
+        console.log(`TextGlasspane: Received message with reasoning array of length ${payload.reasoning.length}`);
+        
+        // Process each reasoning item directly
+        const considerations = [];
+        
+        // Extract all considerations from the reasoning array
+        payload.reasoning.forEach(item => {
+          if (item && item.value && item.value.type === 'show-text' && item.value.consideration) {
+            considerations.push(item.value.consideration);
+          }
+        });
+        
+        if (considerations.length > 0) {
+          console.log(`TextGlasspane: Extracted ${considerations.length} considerations:`, considerations);
+          
+          // Only process if we're not already showing a message
+          if (!isReasoningMessageActive) {
+            isReasoningMessageActive = true;
+            
+            // Clear any existing timers
+            clearAllTimers();
+            
+            // Update the state
+            setConsiderationsQueue(considerations);
+            setCurrentConsiderationIndex(0);
+            
+            // Display the first consideration
+            if (considerations[0]) {
+              setShowPane(true);
+              console.log(`TextGlasspane: Displaying first consideration: ${considerations[0]}`);
+              
+              // Use setTimeout to ensure state updates have completed
+              setTimeout(() => {
+                displayWithTypingAnimation(
+                  considerations[0],
+                  0,
+                  considerations.length,
+                  considerations
+                );
+              }, 100);
+            }
+          }
+        }
+      } else {
+        // For other message formats, add to queue and process
+        reasoningQueue.push(payload);
+        processNextMessage();
+      }
     });
     
     // Cleanup function

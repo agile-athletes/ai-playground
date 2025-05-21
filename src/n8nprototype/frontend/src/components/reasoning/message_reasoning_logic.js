@@ -141,6 +141,18 @@ class MessageLogic {
       for (const item of payload.reasoning) {
         debugLog('Processing reasoning item:', JSON.stringify(item));
         
+        // Handle the specific format with id, name, value structure as shown in the example
+        if (item && item.id && item.name && item.value) {
+          // Check for the specific format where value contains type and consideration
+          if (item.value.type === 'show-text' && item.value.consideration) {
+            // This is the format from the example
+            const consideration = item.value.consideration;
+            extractedConsiderations.push(consideration);
+            debugLog(`Found consideration in show-text item with id ${item.id}:`, consideration);
+            // Don't continue - we want to process all items in the array
+          }
+        }
+        
         // Special handling for show-text type
         if (item && item.type === 'show-text') {
           debugLog('Found show-text type item');
