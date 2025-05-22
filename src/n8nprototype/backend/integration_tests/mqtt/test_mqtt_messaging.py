@@ -11,7 +11,6 @@ import socket
 import unittest
 import datetime
 import logging
-import uuid
 import paho.mqtt.client as mqtt
 import jwt
 
