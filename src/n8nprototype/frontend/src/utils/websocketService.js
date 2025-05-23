@@ -66,7 +66,8 @@ class WebSocketService {
       // Connect directly to the MQTT server using the mqtt.js library
       // Using URL parameters for authentication instead of headers due to CORS restrictions
       this.socket = mqtt.connect(urlWithParams, {
-        protocol: 'wss'
+        protocol: 'wss',
+        reconnectPeriod: 0 // Disable automatic reconnection
       });
       
       // Set up event handlers for the MQTT client
@@ -104,17 +105,8 @@ class WebSocketService {
         console.log('MQTT connection closed');
         this.connected = false;
         
-        // Attempt to reconnect if not intentionally closed
-        if (this.reconnectAttempts < this.maxReconnectAttempts) {
-          this.reconnectAttempts++;
-          const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
-          
-          console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
-          
-          this.reconnectTimeout = setTimeout(() => {
-            this.connect();
-          }, delay);
-        }
+        // Automatic reconnection disabled
+        console.log('Automatic reconnection is disabled. Connection will remain closed.');
       });
     } catch (error) {
       console.error('Error creating MQTT connection:', error);

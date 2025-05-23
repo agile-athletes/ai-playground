@@ -88,7 +88,7 @@ function initializeMqttClient(authToken, sessionId, onConnect, onDisconnect, onE
             clientId: clientId,
             keepalive: 60,
             clean: true,
-            reconnectPeriod: 5000,
+            reconnectPeriod: 0, // Disable automatic reconnection
             connectTimeout: 30000
         });
         
