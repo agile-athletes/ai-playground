@@ -81,10 +81,9 @@ export function useAppState() {
             // Trigger re-render
             setWorkflowsVersion(prev => prev + 1);
             
-            // Special case: If the first workflow is selected, call sendMessage with EXPLAINER_URL
+            // Special case for first workflow - just set the flag but don't trigger message
             if (index === 0) {
                 setUseExplainerUrl(true);
-                sendMessage(null);
             }
         }
     };
