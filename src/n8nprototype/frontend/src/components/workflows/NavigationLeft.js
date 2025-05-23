@@ -15,27 +15,19 @@ const WorkflowButton = ({ workflow, selectWorkflow, index }) => {
 };
 
 const NavigationLeft = ({ workflows, selectWorkflow, sessionId }) => {
-  // Debug mode is now set to false
-  const debugMode = false; 
-  const { subscribe, connected: wsConnected, error: wsError } = useWebSocket();
+  // Simple debugMode flag - set to true to use base topics
+  const debugMode = true; 
+  const { subscribe } = useWebSocket();
 
   useEffect(() => {
-    // Log WebSocket connection status from context
-    if (debugMode && (wsError || !wsConnected)) { // Log only if there's an issue or still connecting with debug on
-        console.log(`NavigationLeft: WebSocketContext connected: ${wsConnected}, error: ${wsError}, sessionId available: ${!!sessionId}`);
-    }
-
     if (!subscribe || !sessionId) {
-      if (debugMode || !sessionId) console.log('NavigationLeft: WebSocket service not available or sessionId missing.');
+      console.log('NavigationLeft: WebSocket service not available or sessionId missing.');
       return;
     }
 
-    const topicToSubscribe = debugMode ? 'navigation' : `navigation/${sessionId}`;
-    if (debugMode) {
-      console.log(`NavigationLeft: DEBUG MODE ON - Subscribing to base topic: ${topicToSubscribe}`);
-    } else {
-      console.log(`NavigationLeft: DEBUG MODE OFF - Subscribing to session-specific topic: ${topicToSubscribe}`);
-    }
+    // Simple topic determination
+    const topicName = debugMode ? 'workflows' : `workflows/${sessionId}`;
+    console.log(`NavigationLeft: Subscribing to topic: ${topicName}`);
 
     const handleNavigationMessage = (payload) => {
       console.log('NavigationLeft: Received navigation message:', payload);
@@ -43,14 +35,14 @@ const NavigationLeft = ({ workflows, selectWorkflow, sessionId }) => {
       // Example: if (payload.type === 'navigateToWorkflow') selectWorkflow(payload.workflowId);
     };
 
-    const unsubscribeNavigation = subscribe(topicToSubscribe, handleNavigationMessage);
+    const unsubscribeNavigation = subscribe(topicName, handleNavigationMessage);
 
     return () => {
       if (unsubscribeNavigation) {
         unsubscribeNavigation();
       }
     };
-  }, [subscribe, wsConnected, wsError, sessionId, debugMode, selectWorkflow]);
+  }, [subscribe, sessionId, debugMode]); // Include all dependencies
 
   // Existing return statement follows
     return (

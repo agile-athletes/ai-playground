@@ -41,9 +41,8 @@ export const getWebhookUrl = (path) => {
     return `${webhookBase}/`;
   }
   
-  // For localhost/test mode, prepend 'test-' to the path
   if (isLocalhost()) {
-    return `${webhookBase}/test-${path}`;
+    return `${webhookBase}/${path}`;
   }
   
   // For production, use the regular path

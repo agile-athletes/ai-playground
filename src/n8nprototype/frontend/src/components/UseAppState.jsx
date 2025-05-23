@@ -12,7 +12,7 @@ import attentionLogic from './attentions/message_attention_logic';
 const EXPLAINER_URL = 'explainer'; // Select explainer when the user hits the first workflow
 
 // Debug mode control
-let appDebugMode = false; // Set to false to use session-specific topics
+let appDebugMode = true; // Set to true to use base topics
 
 export function useAppState() {
     // We'll use a ref to store the WebSocket context once it's available

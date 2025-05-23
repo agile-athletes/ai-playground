@@ -9,7 +9,7 @@ let isConnected = false;
 let topicCallbacks = { reasoning: new Map(), workflows: new Map(), attentions: new Map() };
 let subscribedTopics = new Set(); // Track subscribed topics at module level
 let initializationInProgress = false; // Prevent concurrent initialization
-let debugMode = false; // Set to false to use session-specific topics
+let debugMode = true; // Set to true to use base topics
 
 // Debug logging function
 function debugLog(...args) {

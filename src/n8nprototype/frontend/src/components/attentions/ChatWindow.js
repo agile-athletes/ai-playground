@@ -4,34 +4,26 @@ import './ChatWindow.css';
 import { useWebSocket } from '../WebSocketContext'; // Path relative to ChatWindow.js in components/attentions
 
 const ChatWindow = ({ messages, sessionId, setMessages }) => { // Assuming setMessages to update displayed messages
-  // TODO: Make debugMode a prop or configurable if needed
-  const debugMode = false;
-  const { subscribe, connected: wsConnected, error: wsError } = useWebSocket();
+  // Simple debugMode flag - set to true to use base topics
+  const debugMode = true;
+  const { subscribe } = useWebSocket();
   const chatEndRef = useRef(null);
 
-    // Scroll to the bottom whenever messages update.
-    useEffect(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+  // Scroll to the bottom whenever messages update.
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   // Subscribe to attentions topic
   useEffect(() => {
-    // Log WebSocket connection status from context
-    if (debugMode && (wsError || !wsConnected)) { // Log only if there's an issue or still connecting with debug on
-        console.log(`ChatWindow: WebSocketContext connected: ${wsConnected}, error: ${wsError}, sessionId available: ${!!sessionId}`);
-    }
-
     if (!subscribe || !sessionId) {
-      if (debugMode || !sessionId) console.log('ChatWindow: WebSocket service not available or sessionId missing.');
+      console.log('ChatWindow: WebSocket service not available or sessionId missing.');
       return;
     }
 
-    const topicToSubscribe = debugMode ? 'attentions' : `attentions/${sessionId}`;
-    if (debugMode) {
-      console.log(`ChatWindow: DEBUG MODE ON - Subscribing to base topic: ${topicToSubscribe}`);
-    } else {
-      console.log(`ChatWindow: DEBUG MODE OFF - Subscribing to session-specific topic: ${topicToSubscribe}`);
-    }
+    // Simple topic determination
+    const topicName = debugMode ? 'attentions' : `attentions/${sessionId}`;
+    console.log(`ChatWindow: Subscribing to topic: ${topicName}`);
 
     const handleAttentionMessage = (payload) => {
       console.log('ChatWindow: Received attention message:', payload);
@@ -43,14 +35,14 @@ const ChatWindow = ({ messages, sessionId, setMessages }) => { // Assuming setMe
       }
     };
 
-    const unsubscribeAttentions = subscribe(topicToSubscribe, handleAttentionMessage);
+    const unsubscribeAttentions = subscribe(topicName, handleAttentionMessage);
 
     return () => {
       if (unsubscribeAttentions) {
         unsubscribeAttentions();
       }
     };
-  }, [subscribe, wsConnected, wsError, sessionId, debugMode, setMessages]);
+  }, [subscribe, sessionId, setMessages, debugMode]); // Include all dependencies
 
     return (
         <div className="chat-window">

@@ -11,7 +11,9 @@ const TextGlasspane = ({ sessionId }) => {
     currentText: ''
   });
 
-  const { subscribe, connected: wsConnected, error: wsError } = useWebSocket();
+  // Simple debugMode flag - set to true to use base topics
+  const debugMode = true;
+  const { subscribe } = useWebSocket();
 
   // Subscribe to the glasspane controller for state updates
   useEffect(() => {
@@ -24,21 +26,22 @@ const TextGlasspane = ({ sessionId }) => {
 
   // Subscribe to WebSocket messages
   useEffect(() => {
-    if (!wsConnected || wsError) {
-      console.log('TextGlasspane: WebSocket not connected or error, skipping subscription.');
-      return;
-    }
-    console.log(`TextGlasspane: Subscribing to reasoning topic for session: ${sessionId}`);
-
-    const unsubscribeReasoning = subscribe(`reasoning/${sessionId}`, (payload) => {
-      console.log('TextGlasspane: Received raw reasoning message:', payload);
+    // Skip if we don't have what we need
+    if (!subscribe || !sessionId) return;
+    
+    // Simple topic determination
+    const topicName = debugMode ? 'reasoning' : `reasoning/${sessionId}`;
+    console.log(`TextGlasspane: Subscribing to topic: ${topicName}`);
+    
+    const unsubscribeReasoning = subscribe(topicName, (payload) => {
+      console.log('TextGlasspane: Received reasoning message:', payload);
       glasspaneController.processMessage(payload);
     });
 
     return () => {
       if (unsubscribeReasoning) unsubscribeReasoning();
     };
-  }, [subscribe, wsConnected, wsError, sessionId]);
+  }, [subscribe, sessionId, debugMode]); // Include all dependencies
 
   if (!state.isVisible) {
     return null;
