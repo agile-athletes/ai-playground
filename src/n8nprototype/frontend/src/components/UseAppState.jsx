@@ -5,14 +5,12 @@ import {
 } from "./helpers/experiments";
 import {JsonToMarkdownConverter} from "./helpers/json_to_markdown";
 import { getWebhookUrl } from "../utils/baseUrl";
-import { setDebugMode as setMqttDebugMode } from "./WebSocketContext";
 import attentionLogic from './attentions/message_attention_logic';
 
 // Remove 'webhook/' from these constants as getWebhookUrl already adds that prefix
 const EXPLAINER_URL = 'explainer'; // Select explainer when the user hits the first workflow
 
-// Debug mode control
-let appDebugMode = true; // Set to true to use base topics
+// Debug mode is now managed by DebugModeContext
 
 export function useAppState() {
     // We'll use a ref to store the WebSocket context once it's available
@@ -24,6 +22,8 @@ export function useAppState() {
     const workflowsRef = useRef(workflowSelectionStart(EXPLAINER_URL));
     // Add a state to trigger re-renders when workflows change
     const [ workflowVersion, setWorkflowsVersion] = useState(0);
+    // Use local debug mode variable until components can sync with context
+    const debugMode = true; // Set to true to use base topics
 
     // For testing, we can start in authenticated mode
     const [step, setStep] = useState('email'); // TODO 'email', 'token', 'authenticated'
@@ -106,22 +106,7 @@ export function useAppState() {
         return `Bearer ${jwtToken[0].token}`;
     }
     
-    // Function to toggle debug mode for the app and MQTT
-    const toggleDebugMode = (enabled) => {
-        if (enabled === undefined) {
-            // Toggle if no value provided
-            appDebugMode = !appDebugMode;
-        } else {
-            // Set to specific value if provided
-            appDebugMode = enabled;
-        }
-        
-        // Also set MQTT debug mode to match
-        setMqttDebugMode(appDebugMode);
-        
-        console.log(`[App] Debug mode ${appDebugMode ? 'enabled' : 'disabled'}`);
-        return appDebugMode;
-    }
+    // Debug mode is now managed by DebugModeContext
     
     // Initialize WebSocket connections when authenticated
     useEffect(() => {
@@ -146,16 +131,15 @@ export function useAppState() {
     
     // Function to set up subscription to attentions topic
     const setupAttentionsSubscription = () => {
-        if (!webSocketContext.current?.subscribe) {
-            console.warn('WebSocket subscribe method not available for attentions');
-            return;
-        }
+        const { subscribe } = webSocketContext.current;
+        if (!subscribe) return false;
         
-        // Get the topic name using the attention logic module
-        const topicName = attentionLogic.getTopicName(sessionIdRef.current, appDebugMode);
-
-        // Subscribe to the appropriate attentions topic
-        return webSocketContext.current.subscribe(topicName, (payload) => {
+        // In debug mode, use base topic. Otherwise use session-specific topic
+        const topicName = debugMode ? 'attentions' : `attentions/${sessionIdRef.current}`;
+        console.log(`UseAppState: Subscribing to attentions topic: ${topicName}`);
+        
+        // Subscribe to attentions topic
+        subscribe(topicName, (payload) => {
             console.log('Received attentions via WebSocket:', payload);
             
             // Extract attentions using the attention logic module
@@ -178,11 +162,9 @@ export function useAppState() {
             return;
         }
         
-        // Determine topic name based on debug mode
-        // In debug mode: use base topic for all sessions to share data
-        // In normal mode: use session-specific topic to isolate data
-        const topicName = appDebugMode ? 'workflows' : `workflows/${sessionIdRef.current}`;
-        console.log(`Subscribing to ${topicName} topic (debug mode: ${appDebugMode ? 'enabled' : 'disabled'})`);
+        // In debug mode, use base topic. Otherwise use session-specific topic
+        const topicName = debugMode ? 'workflows' : `workflows/${sessionIdRef.current}`;
+        console.log(`UseAppState: Subscribing to workflows topic: ${topicName}`);
         
         // Subscribe to the appropriate workflows topic
         return webSocketContext.current.subscribe(topicName, (payload) => {
@@ -299,7 +281,7 @@ export function useAppState() {
         loadingBlocked,
         blockLoading,
         restartTokenFlow,
-        sessionId: sessionIdRef.current,
-        toggleDebugMode // Expose the debug toggle function
+        sessionId: sessionIdRef.current
+        // toggleDebugMode is now handled by DebugModeContext
     };
 }

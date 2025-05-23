@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import './NavigationLeft.css';
 import { useWebSocket } from '../WebSocketContext'; // Path relative to NavigationLeft.js in components/workflows
+import { useDebugMode } from '../DebugModeContext';
 // Create a local WorkflowButton component instead of importing from upper directory
 
 const WorkflowButton = ({ workflow, selectWorkflow, index }) => {
@@ -15,8 +16,7 @@ const WorkflowButton = ({ workflow, selectWorkflow, index }) => {
 };
 
 const NavigationLeft = ({ workflows, selectWorkflow, sessionId }) => {
-  // Simple debugMode flag - set to true to use base topics
-  const debugMode = true; 
+  const { debugMode } = useDebugMode(); // Get debugMode from context
   const { subscribe } = useWebSocket();
 
   useEffect(() => {
@@ -25,7 +25,7 @@ const NavigationLeft = ({ workflows, selectWorkflow, sessionId }) => {
       return;
     }
 
-    // Simple topic determination
+    // In debug mode, use base topic. Otherwise use session-specific topic
     const topicName = debugMode ? 'workflows' : `workflows/${sessionId}`;
     console.log(`NavigationLeft: Subscribing to topic: ${topicName}`);
 

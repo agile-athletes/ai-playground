@@ -9,6 +9,7 @@ import {EmailForm} from "./components/EmailForm";
 import {TokenForm} from "./components/TokenForm";
 import { WebSocketProvider, useWebSocket } from './components/WebSocketContext';
 import websocketService from './utils/websocketService';
+import { DebugModeProvider } from './components/DebugModeContext';
 
 // Component to update WebSocket connection status
 function WebSocketStatusUpdater({ setWsConnected }) {
@@ -100,25 +101,27 @@ function App() {
             {step === 'authenticated' && (
             <>
             {jwtToken && jwtToken[0] && jwtToken[0].token ? (
-              <WebSocketProvider authToken={jwtToken[0].token} sessionId={sessionId}>
-                <WebSocketStatusUpdater setWsConnected={setWsConnected} />
-                <div className="app-wrapper">
-                    <NavigationLeft workflows={workflows} selectWorkflow={selectWorkflow} sessionId={sessionId}/>
-                    <div className="main-content">
-                        <div className="connection-status">
-                            <span className={`status-dot ${wsConnected ? 'connected' : 'disconnected'}`} title={wsConnected ? 'WebSocket Connected' : 'WebSocket Disconnected'}></span>
-                        </div>
-                        <ChatWindow 
-                            messages={messages}
-                            sessionId={sessionId}
-                        />
-                        {/* Mount TextGlasspane at the App level to cover the entire application */}
-                        <TextGlasspane sessionId={sessionId} />
-                        <InputArea onSend={sendMessage} onNewChat={clearChat} loading={loading} blockLoading={blockLoading}/>
-                    </div>
-                    <div className="right-sidebar"></div>
-                </div>
-            </WebSocketProvider>
+              <DebugModeProvider>
+                <WebSocketProvider authToken={jwtToken[0].token} sessionId={sessionId}>
+                  <WebSocketStatusUpdater setWsConnected={setWsConnected} />
+                  <div className="app-wrapper">
+                      <NavigationLeft workflows={workflows} selectWorkflow={selectWorkflow} sessionId={sessionId}/>
+                      <div className="main-content">
+                          <div className="connection-status">
+                              <span className={`status-dot ${wsConnected ? 'connected' : 'disconnected'}`} title={wsConnected ? 'WebSocket Connected' : 'WebSocket Disconnected'}></span>
+                          </div>
+                          <ChatWindow 
+                              messages={messages}
+                              sessionId={sessionId}
+                          />
+                          {/* Mount TextGlasspane at the App level to cover the entire application */}
+                          <TextGlasspane sessionId={sessionId} />
+                          <InputArea onSend={sendMessage} onNewChat={clearChat} loading={loading} blockLoading={blockLoading}/>
+                      </div>
+                      <div className="right-sidebar"></div>
+                  </div>
+                </WebSocketProvider>
+              </DebugModeProvider>
             ) : (
               <div>Authentication token not available. Please try logging in again.</div>
             )}

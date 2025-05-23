@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './TextGlasspane.css';
 import { useWebSocket } from '../WebSocketContext';
+import { useDebugMode } from '../DebugModeContext';
 import glasspaneController from './GlasspaneController';
 
 const TextGlasspane = ({ sessionId }) => {
@@ -11,8 +12,7 @@ const TextGlasspane = ({ sessionId }) => {
     currentText: ''
   });
 
-  // Simple debugMode flag - set to true to use base topics
-  const debugMode = true;
+  const { debugMode } = useDebugMode(); // Get debugMode from context
   const { subscribe } = useWebSocket();
 
   // Subscribe to the glasspane controller for state updates
@@ -29,7 +29,7 @@ const TextGlasspane = ({ sessionId }) => {
     // Skip if we don't have what we need
     if (!subscribe || !sessionId) return;
     
-    // Simple topic determination
+    // In debug mode, use base topic. Otherwise use session-specific topic
     const topicName = debugMode ? 'reasoning' : `reasoning/${sessionId}`;
     console.log(`TextGlasspane: Subscribing to topic: ${topicName}`);
     

@@ -2,11 +2,11 @@ import React, { useEffect, useRef } from 'react';
 import ChatMessage from './ChatMessage';
 import './ChatWindow.css';
 import { useWebSocket } from '../WebSocketContext'; // Path relative to ChatWindow.js in components/attentions
+import { useDebugMode } from '../DebugModeContext';
 
 const ChatWindow = ({ messages, sessionId, setMessages }) => { // Assuming setMessages to update displayed messages
-  // Simple debugMode flag - set to true to use base topics
-  const debugMode = true;
   const { subscribe } = useWebSocket();
+  const { debugMode } = useDebugMode();
   const chatEndRef = useRef(null);
 
   // Scroll to the bottom whenever messages update.
@@ -16,12 +16,12 @@ const ChatWindow = ({ messages, sessionId, setMessages }) => { // Assuming setMe
 
   // Subscribe to attentions topic
   useEffect(() => {
-    if (!subscribe || !sessionId) {
-      console.log('ChatWindow: WebSocket service not available or sessionId missing.');
+    if (!subscribe) {
+      console.log('ChatWindow: WebSocket service not available.');
       return;
     }
 
-    // Simple topic determination
+    // In debug mode, use base topic. Otherwise use session-specific topic
     const topicName = debugMode ? 'attentions' : `attentions/${sessionId}`;
     console.log(`ChatWindow: Subscribing to topic: ${topicName}`);
 
