@@ -15,7 +15,7 @@ const WorkflowButton = ({ workflow, selectWorkflow, index }) => {
 };
 
 const NavigationLeft = ({ workflows, selectWorkflow, sessionId }) => {
-  // TODO: Make debugMode a prop or configurable if needed
+  // Debug mode is now set to false
   const debugMode = false; 
   const { subscribe, connected: wsConnected, error: wsError } = useWebSocket();
 

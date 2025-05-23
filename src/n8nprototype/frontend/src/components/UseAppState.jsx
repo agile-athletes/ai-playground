@@ -12,7 +12,7 @@ import attentionLogic from './attentions/message_attention_logic';
 const EXPLAINER_URL = 'explainer'; // Select explainer when the user hits the first workflow
 
 // Debug mode control
-let appDebugMode = true; // Set to true by default to show reasoning and attentions
+let appDebugMode = false; // Set to false to use session-specific topics
 
 export function useAppState() {
     // We'll use a ref to store the WebSocket context once it's available
@@ -228,6 +228,7 @@ export function useAppState() {
         // Prepare the messages to send to the backend
         const toUpdateMessages = {
             messages: getMessages(),
+                session_id: sessionIdRef.current, // Include session ID in the payload
         };
 
         // Get the correct webhook URL based on the current workflow

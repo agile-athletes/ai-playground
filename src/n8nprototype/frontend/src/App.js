@@ -103,13 +103,14 @@ function App() {
               <WebSocketProvider authToken={jwtToken[0].token} sessionId={sessionId}>
                 <WebSocketStatusUpdater setWsConnected={setWsConnected} />
                 <div className="app-wrapper">
-                    <NavigationLeft workflows={workflows} selectWorkflow={selectWorkflow}/>
+                    <NavigationLeft workflows={workflows} selectWorkflow={selectWorkflow} sessionId={sessionId}/>
                     <div className="main-content">
                         <div className="connection-status">
                             <span className={`status-dot ${wsConnected ? 'connected' : 'disconnected'}`} title={wsConnected ? 'WebSocket Connected' : 'WebSocket Disconnected'}></span>
                         </div>
                         <ChatWindow 
-                            messages={messages} 
+                            messages={messages}
+                            sessionId={sessionId}
                         />
                         {/* Mount TextGlasspane at the App level to cover the entire application */}
                         <TextGlasspane sessionId={sessionId} />

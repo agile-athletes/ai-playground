@@ -8,7 +8,7 @@
 class GlasspaneController {
   constructor() {
     // Debug mode flag
-    this.debugMode = true;
+    this.debugMode = false;
 
     // State
     this.isActive = false;
