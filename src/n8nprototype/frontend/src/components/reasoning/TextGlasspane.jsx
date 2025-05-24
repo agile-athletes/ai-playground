@@ -15,11 +15,10 @@ const TextGlasspane = ({ sessionId }) => {
 
   // Subscribe to the glasspane controller for state updates
   useEffect(() => {
-    const unsubscribe = glasspaneController.subscribe(newState => {
+    // Return the unsubscribe function directly to avoid redundant variable
+    return glasspaneController.subscribe(newState => {
       setState(newState);
     });
-    
-    return unsubscribe;
   }, []);
 
   // Subscribe to WebSocket messages

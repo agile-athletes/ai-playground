@@ -3,7 +3,7 @@ import ChatMessage from './ChatMessage';
 import './ChatWindow.css';
 // No longer need WebSocketContext as UseAppState handles subscriptions
 
-const ChatWindow = ({ messages, sessionId, setMessages }) => { // Assuming setMessages to update displayed messages
+const ChatWindow = ({ messages }) => { // Simple presentational component that displays messages
   const chatEndRef = useRef(null);
 
   // Scroll to the bottom whenever messages update.

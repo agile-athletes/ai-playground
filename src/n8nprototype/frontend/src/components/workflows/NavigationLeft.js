@@ -14,7 +14,7 @@ const WorkflowButton = ({ workflow, selectWorkflow, index }) => {
     );
 };
 
-const NavigationLeft = ({ workflows, selectWorkflow, sessionId }) => {
+const NavigationLeft = ({ workflows, selectWorkflow }) => {
 
   // NOTE: Workflows are now handled by UseAppState.jsx
   // This component just renders the workflows that are passed as props
