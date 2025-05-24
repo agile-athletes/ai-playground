@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './TextGlasspane.css';
 import { useWebSocket } from '../WebSocketContext';
-import { useDebugMode } from '../DebugModeContext';
 import glasspaneController from './GlasspaneController';
 
 const TextGlasspane = ({ sessionId }) => {
@@ -12,7 +11,6 @@ const TextGlasspane = ({ sessionId }) => {
     currentText: ''
   });
 
-  const { debugMode } = useDebugMode(); // Get debugMode from context
   const { subscribe } = useWebSocket();
 
   // Subscribe to the glasspane controller for state updates

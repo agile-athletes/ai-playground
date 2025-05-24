@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import './NavigationLeft.css';
-import { useWebSocket } from '../WebSocketContext'; // Path relative to NavigationLeft.js in components/workflows
-import { useDebugMode } from '../DebugModeContext';
+// No longer need WebSocketContext as UseAppState handles subscriptions
 // Create a local WorkflowButton component instead of importing from upper directory
 
 const WorkflowButton = ({ workflow, selectWorkflow, index }) => {
@@ -16,33 +15,9 @@ const WorkflowButton = ({ workflow, selectWorkflow, index }) => {
 };
 
 const NavigationLeft = ({ workflows, selectWorkflow, sessionId }) => {
-  const { debugMode } = useDebugMode(); // Get debugMode from context
-  const { subscribe } = useWebSocket();
 
-  useEffect(() => {
-    if (!subscribe || !sessionId) {
-      console.log('NavigationLeft: WebSocket service not available or sessionId missing.');
-      return;
-    }
-
-    // Always use base topic name - WebSocketContext will add session ID
-    const topicName = 'workflows';
-    console.log(`NavigationLeft: Subscribing to topic: ${topicName}`);
-
-    const handleNavigationMessage = (payload) => {
-      console.log('NavigationLeft: Received navigation message:', payload);
-      // TODO: Process the navigation payload, e.g., update workflows, trigger actions
-      // Example: if (payload.type === 'navigateToWorkflow') selectWorkflow(payload.workflowId);
-    };
-
-    const unsubscribeNavigation = subscribe(topicName, handleNavigationMessage);
-
-    return () => {
-      if (unsubscribeNavigation) {
-        unsubscribeNavigation();
-      }
-    };
-  }, [subscribe, sessionId]); // Include all dependencies
+  // NOTE: Workflows are now handled by UseAppState.jsx
+  // This component just renders the workflows that are passed as props
 
   // Existing return statement follows
     return (
