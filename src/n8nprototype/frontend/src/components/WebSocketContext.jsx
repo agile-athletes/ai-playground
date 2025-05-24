@@ -6,10 +6,10 @@ import mqtt from 'mqtt';
 // This ensures we have only one instance across the entire application
 let mqttClient = null;
 let isConnected = false;
-let topicCallbacks = { reasoning: new Map(), workflows: new Map(), attentions: new Map() };
+let topicCallbacks = {}; // Dynamic map of topics to callbacks
 let subscribedTopics = new Set(); // Track subscribed topics at module level
 let initializationInProgress = false; // Prevent concurrent initialization
-let debugMode = true; // Set to true to use base topics
+let debugMode = true; // Debug mode flag (no longer affects topic subscription)
 
 // Debug logging function
 function debugLog(...args) {
@@ -112,21 +112,25 @@ function initializeMqttClient(authToken, sessionId, onConnect, onDisconnect, onE
                 });
             }
             
-            // Also subscribe to the base topics without session ID
-            // This allows receiving messages from the Python test script
-            if ( debugMode ) {
+            // Only subscribe to topics with session ID if available
+            if (sessionId && typeof sessionId === 'string' && sessionId.trim() !== '') {
+                debugLog(`Using session ID for subscriptions: ${sessionId}`);
+                // Subscribe to all base topics with session ID
                 ['reasoning', 'workflows', 'attentions'].forEach(baseTopic => {
-                    if (!subscribedTopics.has(baseTopic)) {
-                        mqttClient.subscribe(baseTopic, {qos: 1}, (err) => {
+                    const sessionTopic = `${baseTopic}/${sessionId}`;
+                    if (!subscribedTopics.has(sessionTopic)) {
+                        mqttClient.subscribe(sessionTopic, {qos: 1}, (err) => {
                             if (err) {
-                                console.error(`Error subscribing to base topic ${baseTopic}:`, err);
+                                console.error(`Error subscribing to session topic ${sessionTopic}:`, err);
                             } else {
-                                debugLog(`Subscribed to base topic: ${baseTopic}`);
-                                subscribedTopics.add(baseTopic);
+                                debugLog(`Subscribed to session topic: ${sessionTopic}`);
+                                subscribedTopics.add(sessionTopic);
                             }
                         });
                     }
                 });
+            } else {
+                console.warn('No valid session ID available for MQTT subscriptions');
             }
             
             onConnect();
@@ -141,7 +145,7 @@ function initializeMqttClient(authToken, sessionId, onConnect, onDisconnect, onE
                 const payload = JSON.parse(messageStr);
                 debugLog(`Received message on topic ${topic}:`, payload);
                 
-                // Get callbacks registered for this exact topic
+                // Get callbacks registered for this topic
                 const callbacks = topicCallbacks[topic];
                 
                 // Execute callbacks if we found any
@@ -237,8 +241,17 @@ export function WebSocketProvider({ children, authToken, sessionId }) {
     };
     
     // Subscribe callback function
-    // Parameter 'topic' is the specific topic string for MQTT subscription (e.g., 'reasoning' or 'reasoning/sessionId')
-    const subscribe = (topic, callback) => {
+    // Always use session-specific topics for subscriptions (e.g., 'reasoning/sessionId')
+    const subscribe = (baseTopic, callback) => {
+        // Make sure we have a valid sessionId
+        if (!sessionId) {
+            console.error('Cannot subscribe without sessionId');
+            return () => {}; // Return empty unsubscribe function
+        }
+        
+        // Convert base topic to session-specific topic
+        const topic = `${baseTopic}/${sessionId}`;
+        
         // Initialize the callback map for this topic if it doesn't exist
         if (!topicCallbacks[topic]) {
             topicCallbacks[topic] = new Map();

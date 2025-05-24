@@ -29,8 +29,8 @@ const TextGlasspane = ({ sessionId }) => {
     // Skip if we don't have what we need
     if (!subscribe || !sessionId) return;
     
-    // In debug mode, use base topic. Otherwise use session-specific topic
-    const topicName = debugMode ? 'reasoning' : `reasoning/${sessionId}`;
+    // Always use base topic name - WebSocketContext will add session ID
+    const topicName = 'reasoning';
     console.log(`TextGlasspane: Subscribing to topic: ${topicName}`);
     
     const unsubscribeReasoning = subscribe(topicName, (payload) => {
@@ -41,7 +41,7 @@ const TextGlasspane = ({ sessionId }) => {
     return () => {
       if (unsubscribeReasoning) unsubscribeReasoning();
     };
-  }, [subscribe, sessionId, debugMode]); // Include all dependencies
+  }, [subscribe, sessionId]); // Include all dependencies
 
   if (!state.isVisible) {
     return null;

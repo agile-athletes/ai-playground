@@ -25,8 +25,8 @@ const NavigationLeft = ({ workflows, selectWorkflow, sessionId }) => {
       return;
     }
 
-    // In debug mode, use base topic. Otherwise use session-specific topic
-    const topicName = debugMode ? 'workflows' : `workflows/${sessionId}`;
+    // Always use base topic name - WebSocketContext will add session ID
+    const topicName = 'workflows';
     console.log(`NavigationLeft: Subscribing to topic: ${topicName}`);
 
     const handleNavigationMessage = (payload) => {
@@ -42,7 +42,7 @@ const NavigationLeft = ({ workflows, selectWorkflow, sessionId }) => {
         unsubscribeNavigation();
       }
     };
-  }, [subscribe, sessionId, debugMode]); // Include all dependencies
+  }, [subscribe, sessionId]); // Include all dependencies
 
   // Existing return statement follows
     return (

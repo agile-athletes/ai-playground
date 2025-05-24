@@ -21,8 +21,8 @@ const ChatWindow = ({ messages, sessionId, setMessages }) => { // Assuming setMe
       return;
     }
 
-    // In debug mode, use base topic. Otherwise use session-specific topic
-    const topicName = debugMode ? 'attentions' : `attentions/${sessionId}`;
+    // Always use base topic name - WebSocketContext will add session ID
+    const topicName = 'attentions';
     console.log(`ChatWindow: Subscribing to topic: ${topicName}`);
 
     const handleAttentionMessage = (payload) => {
@@ -42,7 +42,7 @@ const ChatWindow = ({ messages, sessionId, setMessages }) => { // Assuming setMe
         unsubscribeAttentions();
       }
     };
-  }, [subscribe, sessionId, setMessages, debugMode]); // Include all dependencies
+  }, [subscribe, sessionId, setMessages]); // Include all dependencies
 
     return (
         <div className="chat-window">
