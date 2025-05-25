@@ -18,8 +18,7 @@ export const decodeJwt = (token) => {
     if (parts.length !== 3) return null;
     
     // Decode the payload (middle part)
-    const payload = JSON.parse(atob(parts[1]));
-    return payload;
+    return JSON.parse(atob(parts[1]));
   } catch (error) {
     console.error('Error decoding JWT:', error);
     return null;
