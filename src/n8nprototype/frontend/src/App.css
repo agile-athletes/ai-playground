@@ -82,6 +82,7 @@ html, body {
 .connection-status {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     padding: 5px 10px;
     margin-bottom: 10px;
     font-size: 0.8rem;
@@ -108,6 +109,34 @@ html, body {
 
 .session-id {
     margin-left: 5px;
+}
+
+/* Hamburger menu styling */
+.hamburger-menu {
+    cursor: pointer;
+    position: relative;
+}
+
+.hamburger-icon {
+    width: 20px;
+    height: 16px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.hamburger-icon span {
+    display: block;
+    height: 2px;
+    width: 100%;
+    background-color: var(--text-primary);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.hamburger-menu:hover .hamburger-icon span {
+    background-color: var(--primary-color);
 }
 
 /* Media queries for mobile devices */

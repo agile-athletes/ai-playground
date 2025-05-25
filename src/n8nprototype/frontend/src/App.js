@@ -9,7 +9,12 @@ import {EmailForm} from "./components/EmailForm";
 import {TokenForm} from "./components/TokenForm";
 import { WebSocketProvider, useWebSocket } from './components/WebSocketContext';
 import websocketService from './utils/websocketService';
+
 import { DebugModeProvider } from './components/DebugModeContext';
+import Settings from './components/Settings';
+
+// Make websocketService globally available
+window.websocketService = websocketService;
 
 // Component to update WebSocket connection status
 function WebSocketStatusUpdater({ setWsConnected }) {
@@ -50,6 +55,9 @@ function App() {
     // Track WebSocket connection status
     const [wsConnected, setWsConnected] = useState(false);
     
+    // State to control settings panel visibility
+    const [showSettings, setShowSettings] = useState(false);
+    
     // Monitor WebSocket connection status
     useEffect(() => {
         if (step === 'authenticated') {
@@ -84,8 +92,13 @@ function App() {
         setJwtToken(response); // The response is already in the correct format [{ token: '...' }]
         console.log('Authentication state set to authenticated');
         
-        // Store auth data in localStorage for the websocketService to use
-        localStorage.setItem('authData', JSON.stringify(response));
+        // Check the user's session persistence preference
+        const persistSession = localStorage.getItem('persistJwtSession') === 'true';
+        const storageType = persistSession ? localStorage : sessionStorage;
+        
+        // Store auth data in the appropriate storage for the websocketService to use
+        storageType.setItem('authData', JSON.stringify(response));
+        console.log(`Stored auth data in ${persistSession ? 'localStorage (persistent)' : 'sessionStorage (session only)'}`);
         
         // Initialize the WebSocket connection now that we have a valid token
         setTimeout(() => {
@@ -109,6 +122,18 @@ function App() {
                       <div className="main-content">
                           <div className="connection-status">
                               <span className={`status-dot ${wsConnected ? 'connected' : 'disconnected'}`} title={wsConnected ? 'WebSocket Connected' : 'WebSocket Disconnected'}></span>
+                              <div 
+                                  className="hamburger-menu" 
+                                  title="Settings"
+                                  onClick={() => setShowSettings(!showSettings)}
+                              >
+                                  <div className="hamburger-icon">
+                                      <span></span>
+                                      <span></span>
+                                      <span></span>
+                                  </div>
+                              </div>
+                              {showSettings && <Settings onClose={() => setShowSettings(false)} />}
                           </div>
                           <ChatWindow 
                               messages={messages}

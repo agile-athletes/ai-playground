@@ -25,10 +25,42 @@ export function useAppState() {
     // Use local debug mode variable until components can sync with context
     const debugMode = true; // Set to true to use base topics
 
-    // For testing, we can start in authenticated mode
-    const [step, setStep] = useState('email'); // TODO 'email', 'token', 'authenticated'
+    // Start in email step by default, but check for stored tokens first
+    const [step, setStep] = useState('email'); 
     // Use test token for MQTT connection
     const [jwtToken, setJwtToken] = useState([{"token":""}])
+    
+    // Check for existing token on initial load
+    useEffect(() => {
+        // Only check if we're in the email step (initial state)
+        if (step !== 'email') return;
+        
+        // Check if session persistence is enabled
+        const persistSession = localStorage.getItem('persistJwtSession') === 'true';
+        
+        try {
+            // Try to load from the appropriate storage
+            const storageType = persistSession ? localStorage : sessionStorage;
+            const authData = storageType.getItem('authData');
+            
+            if (authData) {
+                const parsedData = JSON.parse(authData);
+                if (parsedData && parsedData.length > 0 && parsedData[0].token) {
+                    console.log('Found existing token, skipping login');
+                    setJwtToken(parsedData);
+                    setStep('authenticated');
+                    
+                    // Initialize the WebSocket connection with the token
+                    setTimeout(() => {
+                        const initialized = window.websocketService?.initialize?.();
+                        console.log('WebSocket initialization result from auto-login:', initialized);
+                    }, 500);
+                }
+            }
+        } catch (error) {
+            console.error('Error checking for existing token:', error);
+        }
+    }, [step]);
 
     const [userEmail, setUserEmail] = useState('');
     const [loading, setLoading] = useState(false);

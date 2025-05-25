@@ -41,7 +41,16 @@ export const getWebhookUrl = (path) => {
     return `${webhookBase}/`;
   }
   
+  // When running on localhost, prefix with 'test-' for workflow endpoints
   if (isLocalhost()) {
+    // Check if this is a workflow endpoint that needs the 'test-' prefix
+    // These are typically POST endpoints like 'request-token'
+    if (path) {
+      console.log(`Running on localhost: Adding 'test-' prefix to endpoint: ${path}`);
+      return `${webhookBase}/test-${path}`;
+    }
+    
+    // For non-workflow endpoints, use the path as is
     return `${webhookBase}/${path}`;
   }
   

@@ -35,22 +35,41 @@ class WebSocketService {
     try {
       let token = null;
       
-      // Try to get the token from localStorage where it's stored during authentication
+      // Try to get the token from storage (localStorage or sessionStorage based on persistence setting)
       try {
-        const authData = localStorage.getItem('authData');
+        // Check if we should use localStorage (persistent) or sessionStorage (session only)
+        const persistSession = localStorage.getItem('persistJwtSession') === 'true';
+        const storageType = persistSession ? localStorage : sessionStorage;
+        
+        // First try the selected storage type
+        let authData = storageType.getItem('authData');
+        
+        // If not found in the selected storage, try the alternative as fallback
+        if (!authData) {
+          const altStorageType = persistSession ? sessionStorage : localStorage;
+          authData = altStorageType.getItem('authData');
+          
+          // If found in alternative storage, move it to the preferred storage
+          if (authData) {
+            console.log(`Moving auth data from ${persistSession ? 'sessionStorage' : 'localStorage'} to ${persistSession ? 'localStorage' : 'sessionStorage'}`);
+            storageType.setItem('authData', authData);
+            altStorageType.removeItem('authData');
+          }
+        }
+        
         if (authData) {
           const parsedData = JSON.parse(authData);
           if (parsedData && parsedData.length > 0 && parsedData[0].token) {
             token = parsedData[0].token;
-            console.log('Using token from localStorage for WebSocket connection');
+            console.log(`Using token from ${persistSession ? 'localStorage' : 'sessionStorage'} for WebSocket connection`);
           } else {
-            console.log('No token found in parsed authData from localStorage.');
+            console.log(`No token found in parsed authData from ${persistSession ? 'localStorage' : 'sessionStorage'}.`);
           }
         } else {
-          console.log('No authData found in localStorage.');
+          console.log(`No authData found in ${persistSession ? 'localStorage' : 'sessionStorage'}.`);
         }
       } catch (error) {
-        console.error('Error retrieving token from localStorage:', error);
+        console.error('Error retrieving token from storage:', error);
       }
 
       // If no token is available from localStorage, we shouldn't connect.
