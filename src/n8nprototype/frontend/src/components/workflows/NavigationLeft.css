@@ -4,6 +4,8 @@
     padding: 20px;
     width: 280px;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
 }
 
 .navigation-left h2 {
@@ -19,4 +21,44 @@
 .navigation-left li {
     margin: 10px 0;
     cursor: pointer;
+}
+
+/* Navigation header with N8N button */
+.navigation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.navigation-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.n8n-link-button {
+    display: flex;
+    align-items: center;
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.n8n-link-button:hover {
+    background-color: #e2e8f0;
+    color: var(--primary-color);
+}
+
+.workflow-icon {
+    margin-right: 5px;
+    font-style: normal;
 }
