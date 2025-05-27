@@ -118,14 +118,32 @@ class WebSocketService {
       
       this.socket.on('error', (error) => {
         console.error('MQTT client error:', error);
+        // No longer checking for 401 errors as they are not relevant according to server configuration
       });
       
       this.socket.on('close', () => {
         console.log('MQTT connection closed');
         this.connected = false;
         
-        // Automatic reconnection disabled
-        console.log('Automatic reconnection is disabled. Connection will remain closed.');
+        // Check if we're in authenticated state but connection failed immediately
+        // This likely indicates an authentication problem
+        const authData = localStorage.getItem('authData') || sessionStorage.getItem('authData');
+        if (authData && this.reconnectAttempts === 0) {
+          console.log('WebSocket connection closed immediately after auth attempt - likely an authentication failure');
+          
+          // Clear stored auth data
+          localStorage.removeItem('authData');
+          sessionStorage.removeItem('authData');
+          
+          // Reset step to 'email' if there's an app state handler available
+          if (window.restartTokenFlow) {
+            console.log('Restarting token flow due to likely authentication failure');
+            window.restartTokenFlow();
+          }
+        } else {
+          // Automatic reconnection disabled
+          console.log('Automatic reconnection is disabled. Connection will remain closed.');
+        }
       });
     } catch (error) {
       console.error('Error creating MQTT connection:', error);

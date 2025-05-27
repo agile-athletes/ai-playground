@@ -58,6 +58,13 @@ function App() {
     // State to control settings panel visibility
     const [showSettings, setShowSettings] = useState(false);
     
+    // Make restartTokenFlow globally available for the websocketService
+    useEffect(() => {
+        if (restartTokenFlow) {
+            window.restartTokenFlow = restartTokenFlow;
+        }
+    }, [restartTokenFlow]);
+    
     // Monitor WebSocket connection status
     useEffect(() => {
         if (step === 'authenticated') {

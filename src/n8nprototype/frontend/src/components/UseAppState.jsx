@@ -35,6 +35,15 @@ export function useAppState() {
         // Only check if we're in the email step (initial state)
         if (step !== 'email') return;
         
+        // Check for previous failed authentication attempt marker
+        const failedAuthAttempt = sessionStorage.getItem('failedAuthAttempt');
+        if (failedAuthAttempt) {
+            console.log('Previous authentication attempt failed, not attempting auto-login');
+            // Clear the failed attempt marker
+            sessionStorage.removeItem('failedAuthAttempt');
+            return;
+        }
+        
         // Check if session persistence is enabled
         const persistSession = localStorage.getItem('persistJwtSession') === 'true';
         
@@ -46,7 +55,24 @@ export function useAppState() {
             if (authData) {
                 const parsedData = JSON.parse(authData);
                 if (parsedData && parsedData.length > 0 && parsedData[0].token) {
-                    console.log('Found existing token, skipping login');
+                    console.log('Found existing token, attempting to verify before skipping login');
+                    
+                    // Set a flag to track connection success
+                    window.pendingAuthVerification = true;
+                    
+                    // Set a timeout to check connection status after a reasonable time
+                    const verificationTimeout = setTimeout(() => {
+                        if (window.pendingAuthVerification) {
+                            console.log('WebSocket connection verification timed out');
+                            // Mark as failed so we don't attempt again on page refresh
+                            sessionStorage.setItem('failedAuthAttempt', 'true');
+                            // Clear token and reset state
+                            restartTokenFlow();
+                            window.pendingAuthVerification = false;
+                        }
+                    }, 5000); // 5 seconds should be enough for connection
+                    
+                    // Continue with login process
                     setJwtToken(parsedData);
                     setStep('authenticated');
                     
@@ -54,6 +80,23 @@ export function useAppState() {
                     setTimeout(() => {
                         const initialized = window.websocketService?.initialize?.();
                         console.log('WebSocket initialization result from auto-login:', initialized);
+                        
+                        // Set up another check to verify actual connection success
+                        setTimeout(() => {
+                            // If we're not connected by now, restart the token flow
+                            if (!window.document.wsConnected && window.pendingAuthVerification) {
+                                console.log('WebSocket failed to connect, restarting token flow');
+                                // Mark as failed so we don't attempt again on page refresh
+                                sessionStorage.setItem('failedAuthAttempt', 'true');
+                                restartTokenFlow();
+                                window.pendingAuthVerification = false;
+                                clearTimeout(verificationTimeout);
+                            } else if (window.document.wsConnected) {
+                                console.log('WebSocket connection verified, auto-login successful');
+                                window.pendingAuthVerification = false;
+                                clearTimeout(verificationTimeout);
+                            }
+                        }, 2000); // Check connection after 2 seconds
                     }, 500);
                 }
             }
@@ -126,6 +169,31 @@ export function useAppState() {
     }
 
     const restartTokenFlow = () => {
+        console.log('Restarting token flow - clearing all auth state');
+        
+        // Clear token from state
+        setJwtToken([{"token":""}]);
+        
+        // Clear stored auth data from both storage locations
+        try {
+            localStorage.removeItem('authData');
+            sessionStorage.removeItem('authData');
+            console.log('Cleared auth data from storage');
+        } catch (error) {
+            console.error('Error clearing auth data:', error);
+        }
+        
+        // Disconnect WebSocket if it exists
+        if (window.websocketService) {
+            try {
+                window.websocketService.disconnect();
+                console.log('Disconnected WebSocket connection');
+            } catch (error) {
+                console.error('Error disconnecting WebSocket:', error);
+            }
+        }
+        
+        // Reset app state
         setStep('email');
         setUserEmail('');
     };
@@ -163,6 +231,24 @@ export function useAppState() {
     
     // Function to set up subscription to attentions topic
     const setupAttentionsSubscription = () => {
+        // Check if WebSocket is actually connected before trying to subscribe
+        // This prevents the app from continuing when authentication has failed
+        if (!window.document.wsConnected) {
+            console.log('WebSocket not connected. Cannot subscribe to attentions topic.');
+            
+            // Check if we're in authenticated state but WebSocket isn't connected
+            // This indicates an authentication problem
+            if (step === 'authenticated') {
+                console.log('In authenticated state but WebSocket is not connected. Likely an authentication failure.');
+                // Trigger token flow restart after a brief delay
+                setTimeout(() => {
+                    restartTokenFlow();
+                }, 1000);
+            }
+            
+            return false;
+        }
+        
         const { subscribe } = webSocketContext.current;
         if (!subscribe) return false;
         
@@ -189,6 +275,24 @@ export function useAppState() {
     
     // Function to set up subscription to workflows topic
     const setupWorkflowsSubscription = () => {
+        // Check if WebSocket is actually connected before trying to subscribe
+        // This prevents the app from continuing when authentication has failed
+        if (!window.document.wsConnected) {
+            console.log('WebSocket not connected. Cannot subscribe to workflows topic.');
+            
+            // Check if we're in authenticated state but WebSocket isn't connected
+            // This indicates an authentication problem
+            if (step === 'authenticated') {
+                console.log('In authenticated state but WebSocket is not connected. Likely an authentication failure.');
+                // Trigger token flow restart after a brief delay
+                setTimeout(() => {
+                    restartTokenFlow();
+                }, 1000);
+            }
+            
+            return false;
+        }
+        
         if (!webSocketContext.current?.subscribe) {
             console.warn('WebSocket subscribe method not available for workflows');
             return;
