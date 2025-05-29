@@ -309,26 +309,36 @@ export function useAppState() {
             // Process workflows from different message formats
             let workflowsToAppend = [];
             
-            // Format 1: Direct workflows array
-            if (Array.isArray(payload)) {
-                workflowsToAppend = payload;
-            }
-            // Format 2: Workflows in a property
-            else if (payload && Array.isArray(payload.workflows)) {
-                workflowsToAppend = payload.workflows;
-            }
-            
-            // Process workflows if we found any
-            if (workflowsToAppend.length > 0) {
-                // Update local state
-                appendWorkflowsToWorkflows(workflowsToAppend);
+            try {
+                // Format 1: Direct workflows array
+                if (Array.isArray(payload)) {
+                    workflowsToAppend = payload.filter(item => item !== null && item?.value !== null);
+                }
+                // Format 2: Workflows in a property
+                else if (payload && Array.isArray(payload.workflows)) {
+                    workflowsToAppend = payload.workflows.filter(item => item !== null && item?.value !== null);
+                }
+                // Format 3: Look for attentions array and use it instead
+                else if (payload && Array.isArray(payload.attentions)) {
+                    console.log('Found attentions array, but no workflows array. Processing attentions only.');
+                    // Don't process this as a workflow
+                    return;
+                }
+                
+                // Process workflows if we found any valid ones
+                if (workflowsToAppend.length > 0) {
+                    // Log the cleaned workflows
+                    console.log('Processing filtered workflows:', workflowsToAppend);
+                    // Update local state
+                    appendWorkflowsToWorkflows(workflowsToAppend);
+                }
+            } catch (error) {
+                console.error('Error processing workflow message:', error);
+                console.error('Problematic payload:', payload);
             }
         });
     };
     
-    // We don't need separate useEffects for subscriptions anymore
-    // as we're setting them up in the WebSocket initialization effect
-
     const sendMessage = (userContent) => {
         if (loadingBlocked.current) {
             return;
