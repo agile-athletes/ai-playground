@@ -124,21 +124,30 @@ export const selectNewWorkflow = (workflows, id) => {
 };
 
 export const mergeWorkflows = (existingWorkflows, newWorkflows) => {
+    // Filter out null workflow values from both arrays
+    const validExistingWorkflows = existingWorkflows.filter(wf => wf !== null && wf.value !== null);
+    const validNewWorkflows = newWorkflows.filter(wf => wf !== null && wf.value !== null);
+    
+    // If there are no valid workflows to merge, just return the filtered existing workflows
+    if (validNewWorkflows.length === 0) {
+        return validExistingWorkflows;
+    }
+    
     // Check for URL matches and find the earliest matching index
-    const matchIndex = existingWorkflows.findIndex(existingWorkflow => 
-        newWorkflows.some(newWorkflow => 
+    const matchIndex = validExistingWorkflows.findIndex(existingWorkflow => 
+        validNewWorkflows.some(newWorkflow => 
             newWorkflow.value.url === existingWorkflow.value.url
         )
     );
 
     // Determine the base workflows to use
     const baseWorkflows = matchIndex !== -1 
-        ? existingWorkflows.slice(0, matchIndex) 
-        : existingWorkflows;
+        ? validExistingWorkflows.slice(0, matchIndex) 
+        : validExistingWorkflows;
 
     // Add IDs to new workflows
     const currentCount = baseWorkflows.length + 1;
-    const workflowsWithIds = newWorkflows.map((workflow, index) => ({
+    const workflowsWithIds = validNewWorkflows.map((workflow, index) => ({
         ...workflow,
         id: currentCount + index,
     }));
