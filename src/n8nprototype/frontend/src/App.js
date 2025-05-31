@@ -103,15 +103,13 @@ function App() {
         const persistSession = localStorage.getItem('persistJwtSession') === 'true';
         const storageType = persistSession ? localStorage : sessionStorage;
         
-        // Store auth data in the appropriate storage for the websocketService to use
+        // Store auth data in the appropriate storage
         storageType.setItem('authData', JSON.stringify(response));
         console.log(`Stored auth data in ${persistSession ? 'localStorage (persistent)' : 'sessionStorage (session only)'}`);
         
-        // Initialize the WebSocket connection now that we have a valid token
-        setTimeout(() => {
-            const initialized = websocketService.initialize();
-            console.log('WebSocket initialization result:', initialized);
-        }, 500); // Small delay to ensure token is saved
+        // WebSocketContext will automatically handle the MQTT connection when it mounts
+        // No need to explicitly initialize websocketService anymore
+        console.log('Token verified - WebSocketContext will automatically initialize the MQTT connection');
     };
 
     return (

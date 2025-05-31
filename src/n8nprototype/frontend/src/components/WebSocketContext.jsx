@@ -97,6 +97,9 @@ function initializeMqttClient(authToken, sessionId, onConnect, onDisconnect, onE
             isConnected = true;
             initializationInProgress = false; // Reset initialization flag
             
+            // Make the MQTT client instance available globally for backward compatibility
+            window.mqttClientInstance = mqttClient;
+            
             // Resubscribe to any topics we were previously subscribed to
             if (subscribedTopics.size > 0) {
                 debugLog(`Resubscribing to ${subscribedTopics.size} topics:`, [...subscribedTopics]);
