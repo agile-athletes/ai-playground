@@ -15,7 +15,7 @@ const WorkflowButton = ({ workflow, selectWorkflow, index }) => {
     );
 };
 
-const NavigationLeft = ({ workflows, selectWorkflow }) => {
+const NavigationLeft = ({ workflows, selectWorkflow, isLoading }) => {
   // State to track if single shot N8N test is active
   const [singleShotActive, setSingleShotActive] = useState(false);
 
@@ -59,6 +59,12 @@ const NavigationLeft = ({ workflows, selectWorkflow }) => {
                     </button>
                 )}
             </div>
+            {isLoading && (
+                <div className="loading-indicator">
+                    <div className="loading-spinner"></div>
+                    <div className="loading-text">Loading workflows...</div>
+                </div>
+            )}
             <ul>
                 {workflows.map((workflow, index) => (
                     <li key={workflow.id} style={{ paddingLeft: `${index * 20}px` }}>

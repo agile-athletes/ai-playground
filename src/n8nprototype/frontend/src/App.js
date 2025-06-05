@@ -49,7 +49,8 @@ function App() {
         loading,
         blockLoading,
         restartTokenFlow,
-        sessionId
+        sessionId,
+        isWorkflowPanelLoading // Destructure the new state
     } = useAppState();
     
     // Track WebSocket connection status
@@ -123,7 +124,7 @@ function App() {
                 <WebSocketProvider authToken={jwtToken[0].token} sessionId={sessionId}>
                   <WebSocketStatusUpdater setWsConnected={setWsConnected} />
                   <div className="app-wrapper">
-                      <NavigationLeft workflows={workflows} selectWorkflow={selectWorkflow} sessionId={sessionId}/>
+                      <NavigationLeft workflows={workflows} selectWorkflow={selectWorkflow} sessionId={sessionId} isLoading={isWorkflowPanelLoading} />
                       <div className="main-content">
                           <div className="connection-status">
                               <span className={`status-dot ${wsConnected ? 'connected' : 'disconnected'}`} title={wsConnected ? 'WebSocket Connected' : 'WebSocket Disconnected'}></span>

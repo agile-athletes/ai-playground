@@ -22,6 +22,7 @@ export function useAppState() {
     const workflowsRef = useRef(workflowSelectionStart(EXPLAINER_URL));
     // Add a state to trigger re-renders when workflows change
     const [ workflowVersion, setWorkflowsVersion] = useState(0);
+    const [isWorkflowPanelLoading, setIsWorkflowPanelLoading] = useState(false);
     // Use local debug mode variable until components can sync with context
     const debugMode = true; // Set to true to use base topics
 
@@ -306,31 +307,30 @@ export function useAppState() {
         return webSocketContext.current.subscribe(topicName, (payload) => {
             console.log('Received workflows via WebSocket:', payload);
             
-            // Process workflows from different message formats
-            let workflowsToAppend = [];
-            
             try {
-                // Format 1: Direct workflows array
-                if (Array.isArray(payload)) {
-                    workflowsToAppend = payload.filter(item => item !== null && item?.value !== null);
-                }
-                // Format 2: Workflows in a property
-                else if (payload && Array.isArray(payload.workflows)) {
-                    workflowsToAppend = payload.workflows.filter(item => item !== null && item?.value !== null);
-                }
-                // Format 3: Look for attentions array and use it instead
-                else if (payload && Array.isArray(payload.attentions)) {
-                    console.log('Found attentions array, but no workflows array. Processing attentions only.');
-                    // Don't process this as a workflow
-                    return;
-                }
-                
-                // Process workflows if we found any valid ones
-                if (workflowsToAppend.length > 0) {
-                    // Log the cleaned workflows
-                    console.log('Processing filtered workflows:', workflowsToAppend);
-                    // Update local state
-                    appendWorkflowsToWorkflows(workflowsToAppend);
+                const data = payload
+                console.log('[UseAppState] Received workflow message:', data);
+
+                if (Array.isArray(data) || (data && Array.isArray(data.workflows))) {
+                    // Priority 1: Handle "Loading" messages for the workflow pane
+                    if (data.workflows[0].name === "Loading" && typeof data.workflows[0].value === "boolean") {
+                        setIsWorkflowPanelLoading(data.workflows[0].value);
+                        return;
+                    }
+                    // Priority 2: Handle actual workflow data, which should turn off the loading indicator
+                    setIsWorkflowPanelLoading(false); // New workflow data arrived, so loading is done.
+                    
+                    let workflowsToAppend;
+                    if (Array.isArray(data)) {
+                        workflowsToAppend = data.filter(item => item !== null && item?.value !== null);
+                    } else { // This branch implies (data && Array.isArray(data.workflows))
+                        workflowsToAppend = data.workflows.filter(item => item !== null && item?.value !== null);
+                    }
+                    
+                    if (workflowsToAppend.length > 0) {
+                        console.log('Processing filtered workflows:', workflowsToAppend);
+                        appendWorkflowsToWorkflows(workflowsToAppend);
+                    }
                 }
             } catch (error) {
                 console.error('Error processing workflow message:', error);
@@ -338,7 +338,7 @@ export function useAppState() {
             }
         });
     };
-    
+
     const sendMessage = (userContent) => {
         if (loadingBlocked.current) {
             return;
@@ -427,7 +427,8 @@ export function useAppState() {
         loadingBlocked,
         blockLoading,
         restartTokenFlow,
-        sessionId: sessionIdRef.current
+        sessionId: sessionIdRef.current,
+        isWorkflowPanelLoading // Add new state to returned object
         // toggleDebugMode is now handled by DebugModeContext
     };
 }
