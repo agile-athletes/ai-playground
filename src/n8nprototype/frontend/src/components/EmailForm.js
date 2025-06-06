@@ -19,13 +19,30 @@ export function EmailForm({ onSuccess, onRestart }) {
                 body: JSON.stringify({ email }),
             });
             if (response.status === 440) {
-                // If backend signals token-related issue, restart the flow.
+                // If backend signals token expiration, restart the flow.
+                onRestart();
+                return;
+            }
+            if (response.status === 401) {
+                // Set specific error message for closed user group at Agile Athletes
+                setError('This is a closed user group, please let us know if you are interested: admin@agile-athletes.de');
                 onRestart();
                 return;
             }
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to request token');
+                let errorMessage = 'Failed to request token';
+                try {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const errorData = await response.json();
+                        if (errorData && errorData.message) {
+                            errorMessage = errorData.message;
+                        }
+                    }
+                } catch (jsonError) {
+                    console.error('Error parsing error response:', jsonError);
+                }
+                throw new Error(errorMessage);
             }
             onSuccess(email);
         } catch (err) {
@@ -50,7 +67,7 @@ export function EmailForm({ onSuccess, onRestart }) {
                 {loading ? 'Sending...' : 'Send Token'}
             </button>
             {error && <p style={{ color: 'red' }}>{error}</p>}
-            You will receive an email giving you access for a session that will remain open until you close your browser.
+            When you are registered, you will receive an email giving you access for a session.
         </form>
     );
 }
